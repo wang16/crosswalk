@@ -1,0 +1,15 @@
+''' This file indicate the dependencies cameo lays on.
+    DO NOT use this DEPS to checkout code, it's for tools/fetch_deps.py.
+'''
+
+# chromium_version is the version of chromium cameo based,
+# Usually it's major.minor.build.patch
+# Use 'Trunk' for trunk.
+# If using trunk, will use '.DEPS.git' for gclient.
+chromium_version = 'Trunk'
+chromium_cameo_point = '1de2730a2ff1d7522793e2bd1bdca8a984096afa'
+deps_cameo = {
+  'src': 'ssh://github.com/otcshare/chromium-cameo.git@%s' % chromium_cameo_point,
+  'src/webkit/data/layout_tests/LayoutTests':None,
+  'src/third_party/WebKit/LayoutTests':None
+}

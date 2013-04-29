@@ -34,11 +34,12 @@ def GitExe():
   else:
     return 'git'
 
-def GetCommandOutput(command):
+def GetCommandOutput(command, cwd=None):
   proc = subprocess.Popen(command, stdout=subprocess.PIPE,
-                          stderr=subprocess.STDOUT, bufsize=1)
+                          stderr=subprocess.STDOUT, bufsize=1,
+                          cwd=cwd)
   output = proc.communicate()[0]
   result = proc.returncode
   if result:
-    raise Exception('%s: %s' % (subprocess.list2cmdline(diff), output))
+    raise Exception('%s: %s' % (subprocess.list2cmdline(command), output))
   return output
