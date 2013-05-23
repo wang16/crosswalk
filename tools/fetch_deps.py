@@ -61,7 +61,7 @@ class FolderExistGitWrapper(gclient_scm.GitWrapper):
   def _Fetch(self, remote, options):
     fetch_cmd = ['fetch', remote, '--progress']
     if options.verbose:
-      fetch_cmd.append('--verbose')
+      fetch_cmd.append('-vv')
 
     for _ in range(3):
       try:
