@@ -459,7 +459,6 @@
         },
         {
           'dependencies': [
-            'xwalk_core_shell_apk',
             'xwalk_runtime_lib_apk',
           ],
         }],
