@@ -31,6 +31,8 @@ class XWalkViewDelegate {
         // consequent prodedure does not crash.
         if (!CommandLine.isInitialized())
             CommandLine.init(null);
+        
+        LibraryLoader.setAltLibraryPath("/data/data/" + context.getPackageName() + "/lib/");
 
         ResourceExtractor.setMandatoryPaksToExtract(MANDATORY_PAKS);
         ResourceExtractor.setExtractImplicitLocaleForTesting(false);
