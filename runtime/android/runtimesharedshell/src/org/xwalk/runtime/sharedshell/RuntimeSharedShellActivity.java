@@ -4,11 +4,11 @@
 
 package org.xwalk.runtime.sharedshell;
 
+import org.xwalk.runtime.wrapper.RuntimeView;
+
 import android.app.Activity;
-import android.content.Intent;
 import android.content.Context;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnFocusChangeListener;
@@ -16,17 +16,10 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 
-import org.chromium.content.common.CommandLine;
-import org.xwalk.runtime.RuntimeView;
-
 public class RuntimeSharedShellActivity extends Activity {
-    public static final String COMMAND_LINE_FILE = "/data/local/tmp/runtime-sharedshell-command-line";
-    private static final String TAG = RuntimeSharedShellActivity.class.getName();
-    public static final String COMMAND_LINE_ARGS_KEY = "commandLineArgs";
 
     private EditText mUrlTextView;
     private FrameLayout mContentContainer;
@@ -36,38 +29,18 @@ public class RuntimeSharedShellActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (!CommandLine.isInitialized()) {
-            CommandLine.initFromFile(COMMAND_LINE_FILE);
-            String[] commandLineParams = getCommandLineParamsFromIntent(getIntent());
-            if (commandLineParams != null) {
-                CommandLine.getInstance().appendSwitchesAndArguments(commandLineParams);
-            }
-        }
-
-        waitForDebuggerIfNeeded();
-
         setContentView(R.layout.testshell_activity);
 
         mRuntimeView = new RuntimeView(this);
         mContentContainer = (FrameLayout) findViewById(R.id.content_container);
-        mContentContainer.addView(mRuntimeView,
-                new FrameLayout.LayoutParams(
-                        FrameLayout.LayoutParams.MATCH_PARENT,
-                        FrameLayout.LayoutParams.MATCH_PARENT));
+        if (mRuntimeView.get() != null) {
+            mContentContainer.addView(mRuntimeView.get(),
+                    new FrameLayout.LayoutParams(
+                            FrameLayout.LayoutParams.MATCH_PARENT,
+                            FrameLayout.LayoutParams.MATCH_PARENT));
+        }
 
         initializeUrlField();
-    }
-
-    private void waitForDebuggerIfNeeded() {
-        if (CommandLine.getInstance().hasSwitch(CommandLine.WAIT_FOR_JAVA_DEBUGGER)) {
-            Log.e(TAG, "Waiting for Java debugger to connect...");
-            android.os.Debug.waitForDebugger();
-            Log.e(TAG, "Java debugger connected. Resuming execution.");
-        }
-    }
-
-    private static String[] getCommandLineParamsFromIntent(Intent intent) {
-        return intent != null ? intent.getStringArrayExtra(COMMAND_LINE_ARGS_KEY) : null;
     }
 
     private static String sanitizeUrl(String url) {
