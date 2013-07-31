@@ -4,10 +4,16 @@
 
 package org.xwalk.runtime.sharedshell;
 
+import org.xwalk.runtime.wrapper.CrossPackageWrapper;
+import org.xwalk.runtime.wrapper.CrossPackageWrapperExceptionHandler;
 import org.xwalk.runtime.wrapper.RuntimeView;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
@@ -19,28 +25,63 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 
-public class RuntimeSharedShellActivity extends Activity {
+public class RuntimeSharedShellActivity extends Activity implements CrossPackageWrapperExceptionHandler {
+
+    private static final String g_library_apk_url = "http://powerbuilder.sh.intel.com/wang16/projects/android/android_bin/XWalkRuntimeLib.apk";
 
     private EditText mUrlTextView;
     private FrameLayout mContentContainer;
     private RuntimeView mRuntimeView;
 
+    private boolean ShownNotFoundDialog = false;
+    private boolean GotLibrary = false;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.testshell_activity);
+        LoadLibrary();
+        mRuntimeView.onCreate();
+    }
 
-        mRuntimeView = new RuntimeView(this);
-        mContentContainer = (FrameLayout) findViewById(R.id.content_container);
-        if (mRuntimeView.get() != null) {
-            mContentContainer.addView(mRuntimeView.get(),
-                    new FrameLayout.LayoutParams(
-                            FrameLayout.LayoutParams.MATCH_PARENT,
-                            FrameLayout.LayoutParams.MATCH_PARENT));
+    @Override
+    public void onStart() {
+        super.onStart();
+        LoadLibrary();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        mRuntimeView.onPause();
+    }
+    
+    @Override
+    public void onResume() {
+        super.onResume();
+        mRuntimeView.onResume();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mRuntimeView.onDestroy();
+    }
+
+    private void LoadLibrary() {
+        if (!GotLibrary) {
+            mRuntimeView = new RuntimeView(this, this);
+            if (mRuntimeView.get() != null) {
+                mContentContainer = (FrameLayout) findViewById(R.id.content_container);
+                mContentContainer.addView(mRuntimeView.get(),
+                        new FrameLayout.LayoutParams(
+                                FrameLayout.LayoutParams.MATCH_PARENT,
+                                FrameLayout.LayoutParams.MATCH_PARENT));
+                initializeUrlField();
+                GotLibrary = true;
+                ShownNotFoundDialog = false;
+            }
         }
-
-        initializeUrlField();
     }
 
     private static String sanitizeUrl(String url) {
@@ -85,6 +126,50 @@ public class RuntimeSharedShellActivity extends Activity {
             imm.showSoftInput(mUrlTextView, InputMethodManager.SHOW_IMPLICIT);
         } else {
             imm.hideSoftInputFromWindow(mUrlTextView.getWindowToken(), 0);
+        }
+    }
+
+    @Override
+    public void OnException(Exception e) {
+        ShowLibraryNotFoundDialog();
+    }
+
+    @Override
+    public void OnException(String msg) {
+        ShowLibraryNotFoundDialog();        
+    }
+
+    private void ShowLibraryNotFoundDialog() {
+        if (!ShownNotFoundDialog) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setNegativeButton(android.R.string.cancel,
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            // User cancelled the dialog
+                        }
+                    });
+            builder.setNeutralButton(R.string.download_from_url,
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            Intent goDownload = new Intent(Intent.ACTION_VIEW);
+                            goDownload.setData(Uri.parse(g_library_apk_url));
+                            startActivity(goDownload);
+                        }
+                    });
+            builder.setPositiveButton(R.string.download_from_store,
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            Intent goToMarket = new Intent(Intent.ACTION_VIEW);
+                            goToMarket.setData(Uri.parse("market://details?id="+CrossPackageWrapper.g_library_apk_name));
+                            startActivity(goToMarket);
+                        }
+                    });
+            builder.setTitle(R.string.download_dialog_title).setMessage(R.string.download_dialog_msg);
+    
+            // Create the AlertDialog
+            AlertDialog dialog = builder.create();
+            dialog.show();
+            ShownNotFoundDialog = true;
         }
     }
 }

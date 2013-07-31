@@ -73,8 +73,10 @@ public abstract class CrossPackageWrapper {
     }
     
     public Method LookupMethod(String method, Class<?>... parameters) {
+        if (mTargetClass == null)
+            return null;
         try {
-            return getTargetClass().getMethod(method, parameters);
+            return mTargetClass.getMethod(method, parameters);
         } catch (NoSuchMethodException e) {
             HandleException(e);
         }

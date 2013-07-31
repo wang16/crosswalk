@@ -27,8 +27,8 @@ public class RuntimeView extends CrossPackageWrapper {
     private Method mEnableRemoteDebugging;
     private Method mDisableRemoteDebugging;
 
-    public RuntimeView(Context context) {
-        super(context, class_name, null, Context.class);
+    public RuntimeView(Context context, CrossPackageWrapperExceptionHandler exception_handler) {
+        super(context, class_name, exception_handler, Context.class);
         Context libCtx = getLibCtx();
         mInstance = this.CreateInstance(new MixContext(libCtx, context));
         // TODO(wang16): Add version check

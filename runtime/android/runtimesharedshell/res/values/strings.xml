@@ -7,5 +7,8 @@ found in the LICENSE file.
 -->
 
 <resources>
-    <string name="test_string">Hello, Crosswalk!</string>
+    <string name="download_from_url">Direct Download</string>
+    <string name="download_from_store">Install From Store</string>
+    <string name="download_dialog_title">CrossWalk Runtime Not Found</string>
+    <string name="download_dialog_msg">Please install &quot;CrossWalk Runtime Library&quot; first.</string>
 </resources>
