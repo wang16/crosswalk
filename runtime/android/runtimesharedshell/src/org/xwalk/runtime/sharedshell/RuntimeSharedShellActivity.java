@@ -13,6 +13,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -40,6 +41,7 @@ public class RuntimeSharedShellActivity extends Activity implements CrossPackage
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.testshell_activity);
+        mContentContainer = (FrameLayout) findViewById(R.id.content_container);
         LoadLibrary();
         mRuntimeView.onCreate();
     }
@@ -71,8 +73,8 @@ public class RuntimeSharedShellActivity extends Activity implements CrossPackage
     private void LoadLibrary() {
         if (!GotLibrary) {
             mRuntimeView = new RuntimeView(this, this);
+            mContentContainer.removeAllViews();
             if (mRuntimeView.get() != null) {
-                mContentContainer = (FrameLayout) findViewById(R.id.content_container);
                 mContentContainer.addView(mRuntimeView.get(),
                         new FrameLayout.LayoutParams(
                                 FrameLayout.LayoutParams.MATCH_PARENT,
@@ -80,6 +82,13 @@ public class RuntimeSharedShellActivity extends Activity implements CrossPackage
                 initializeUrlField();
                 GotLibrary = true;
                 ShownNotFoundDialog = false;
+                mRuntimeView.loadAppFromUrl("http://www.baidu.com");
+            } else {
+                TextView msgText = new TextView(this);
+                msgText.setText(R.string.download_dialog_msg);
+                msgText.setTextSize(36);
+                msgText.setTextColor(Color.BLACK);
+                mContentContainer.addView(msgText);
             }
         }
     }
