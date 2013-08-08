@@ -70,10 +70,11 @@
         'resource_dir': 'runtime/android/runtimelib/res',
         'native_lib_target': 'libxwalkcore',
         'additional_input_paths': [
-          '<(PRODUCT_DIR)/xwalk_runtime/assets/xwalk.pak',
+          '<(PRODUCT_DIR)/xwalk_runtime_lib/assets/xwalk.pak',
         ],
         'asset_location': '<(ant_build_out)/xwalk_runtime_lib/assets',
-      }
+      },
+      'includes': [ '../build/java_apk.gypi' ],
     },
     {
       'target_name': 'xwalk_runtime_lib_apk_pak',
