@@ -34,5 +34,44 @@
       },
       'includes': [ '../build/java_apk.gypi' ],
     },
+    {
+      'target_name': 'xwalk_runtime_app_template',
+      'type': 'none',
+      'dependencies': [
+        'xwalk_runtime_shared_shell_apk',
+      ],
+      'copies': [
+        {
+          'destination': '<(PRODUCT_DIR)/xwalk_app_template/libs/',
+          'files': [
+            '<(PRODUCT_DIR)/lib.java/xwalk_app_runtime_activity_java.dex.jar',
+            '<(PRODUCT_DIR)/lib.java/xwalk_app_runtime_activity_java.jar',
+            '<(PRODUCT_DIR)/lib.java/xwalk_app_runtime_client_java.dex.jar',
+            '<(PRODUCT_DIR)/lib.java/xwalk_app_runtime_client_java.jar',
+          ],
+        },
+        {
+          'destination': '<(PRODUCT_DIR)/xwalk_app_template/scripts/',
+          'files': [
+            '../build/android/ant/',  
+            '../build/android/gyp/',
+          ],
+        },
+        {
+          'destination': '<(PRODUCT_DIR)/xwalk_app_template/app_src/',
+          'files': [
+            'runtime/android/runtimesharedshell/AndroidManifest.xml',
+            'runtime/android/runtimesharedshell/res',
+            'runtime/android/runtimesharedshell/src',
+          ],
+        },
+        {
+          'destination': '<(PRODUCT_DIR)/xwalk_app_template/',
+          'files': [
+            'build/android/make_apk.sh',
+          ],
+        },
+      ],
+    },
   ],
 }
