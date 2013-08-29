@@ -15,7 +15,7 @@
 class ColorChooserWin : public xwalk::ColorChooser,
                         public views::ColorChooserListener {
  public:
-  static ColorChooserWin* Open(content::WebContents* tab,
+  static ColorChooserWin* Open(content::WebContents* web_contents,
                                SkColor initial_color);
 
   ColorChooserWin(content::WebContents* web_contents,
@@ -67,7 +67,7 @@ ColorChooserWin::~ColorChooserWin() {
 
 void ColorChooserWin::OnColorChosen(SkColor color) {
   if (web_contents_)
-    web_contents_->DidChooseColorInColorChooser(identifier(), color);
+    web_contents_->DidChooseColorInColorChooser(color);
 }
 
 void ColorChooserWin::OnColorChooserDialogClosed() {
@@ -78,7 +78,7 @@ void ColorChooserWin::OnColorChooserDialogClosed() {
   DCHECK(current_color_chooser_ == this);
   current_color_chooser_ = NULL;
   if (web_contents_)
-    web_contents_->DidEndColorChooser(identifier());
+    web_contents_->DidEndColorChooser();
 }
 
 namespace xwalk {

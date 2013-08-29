@@ -7,7 +7,6 @@
 
 #include "base/message_loop.h"
 #include "base/threading/thread.h"
-#include "chrome/browser/ui/browser_dialogs.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/color_chooser.h"
 #include "content/public/browser/web_contents.h"

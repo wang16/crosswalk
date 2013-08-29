@@ -6,10 +6,13 @@
 #define XWALK_RUNTIME_BROWSER_UI_COLOR_CHOOSER_H_
 
 #include "content/public/browser/color_chooser.h"
-#include "content/public/browser/web_contents.h"
 #include "third_party/skia/include/core/SkColor.h"
 
 class XWalkFormInputTest;
+
+namespace content {
+class WebContents;
+}
 
 namespace xwalk {
 
