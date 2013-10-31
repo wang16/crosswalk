@@ -5,6 +5,7 @@
 
 package org.xwalk.core;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Picture;
 import android.net.http.SslCertificate;
@@ -38,6 +39,7 @@ public class XWalkContentsClientBridge extends XWalkContentsClient
     private DownloadListener mDownloadListener;
     private InterceptNavigationDelegate mInterceptNavigationDelegate;
     private XWalkNavigationHandler mNavigationHandler;
+    private XWalkNotificationService mNotificationService;
 
     // The native peer of the object
     private int mNativeContentsClientBridge;
@@ -84,6 +86,16 @@ public class XWalkContentsClientBridge extends XWalkContentsClient
 
     public void setNavigationHandler(XWalkNavigationHandler handler) {
         mNavigationHandler = handler;
+    }
+
+    public void setNotificationService(XWalkNotificationService service) {
+        if (mNotificationService != null) mNotificationService.shutdown();
+        mNotificationService = service;
+        if (mNotificationService != null) mNotificationService.setBridge(this);
+    }
+
+    public boolean onNewIntent(Intent intent) {
+        return mNotificationService.maybeHandleIntent(intent);
     }
 
     public InterceptNavigationDelegate getInterceptNavigationDelegate() {
@@ -375,6 +387,18 @@ public class XWalkContentsClientBridge extends XWalkContentsClient
         handleJsBeforeUnload(url, message, handler);
     }
 
+    @CalledByNative
+    private void showNotification(String title, String message, String icon,
+            String replaceId, int notificationId, int processId, int routeId) {
+        mNotificationService.showNotification(
+                title, message, icon, notificationId, processId, routeId);
+    }
+
+    @CalledByNative
+    private void cancelNotification(int notificationId, int processId, int routeId) {
+        mNotificationService.cancelNotification(notificationId, processId, routeId);
+    }
+
     void confirmJsResult(int id, String prompt) {
         if (mNativeContentsClientBridge == 0) return;
         nativeConfirmJsResult(mNativeContentsClientBridge, id, prompt);
@@ -383,6 +407,26 @@ public class XWalkContentsClientBridge extends XWalkContentsClient
     void cancelJsResult(int id) {
         if (mNativeContentsClientBridge == 0) return;
         nativeCancelJsResult(mNativeContentsClientBridge, id);
+    }
+
+    public void notificationDisplayed(int id, int processId, int routeId) {
+        if (mNativeContentsClientBridge == 0) return;
+        nativeNotificationDisplayed(mNativeContentsClientBridge, id, processId, routeId);
+    }
+
+    public void notificationError(int id, String error, int processId, int routeId) {
+        if (mNativeContentsClientBridge == 0) return;
+        nativeNotificationError(mNativeContentsClientBridge, id, error, processId, routeId);
+    }
+
+    public void notificationClicked(int id, int processId, int routeId) {
+        if (mNativeContentsClientBridge == 0) return;
+        nativeNotificationClicked(mNativeContentsClientBridge, id, processId, routeId);
+    }
+
+    public void notificationClosed(int id, boolean byUser, int processId, int routeId) {
+        if (mNativeContentsClientBridge == 0) return;
+        nativeNotificationClosed(mNativeContentsClientBridge, id, byUser, processId, routeId);
     }
 
     void setDownloadListener(DownloadListener listener) {
@@ -413,4 +457,13 @@ public class XWalkContentsClientBridge extends XWalkContentsClient
     private native void nativeConfirmJsResult(int nativeXWalkContentsClientBridge, int id,
             String prompt);
     private native void nativeCancelJsResult(int nativeXWalkContentsClientBridge, int id);
+    private native void nativeNotificationDisplayed(int nativeXWalkContentsClientBridge, int id,
+            int processId, int routeId);
+    private native void nativeNotificationError(int nativeXWalkContentsClientBridge, int id,
+            String error, int processId, int routeId);
+    private native void nativeNotificationClicked(int nativeXWalkContentsClientBridge, int id,
+            int processId, int routeId);
+    private native void nativeNotificationClosed(int nativeXWalkContentsClientBridge, int id,
+            boolean byUser, int processId, int routeId);
+
 }

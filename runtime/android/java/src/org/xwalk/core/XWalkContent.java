@@ -175,6 +175,10 @@ public class XWalkContent extends FrameLayout {
         mContentsClientBridge.setNavigationHandler(handler);
     }
 
+    public void setNotificationService(XWalkNotificationService service) {
+        mContentsClientBridge.setNotificationService(service);
+    }
+
     public void onPause() {
         mContentView.onHide();
     }
@@ -185,6 +189,10 @@ public class XWalkContent extends FrameLayout {
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         mWindow.onActivityResult(requestCode, resultCode, data);
+    }
+
+    public boolean onNewIntent(Intent intent) {
+        return mContentsClientBridge.onNewIntent(intent);
     }
 
     public void clearCache(boolean includeDiskFiles) {
@@ -320,6 +328,8 @@ public class XWalkContent extends FrameLayout {
     public void destroy() {
         if (mXWalkContent == 0) return;
 
+        // Set notification service to null to trigger shutdown of it.
+        setNotificationService(null);
         // Remove its children used for page rendering from view hierarchy.
         removeView(mContentView);
         removeView(mContentViewRenderView);

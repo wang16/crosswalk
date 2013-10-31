@@ -52,6 +52,16 @@ class XWalkContentsClientBridge : public XWalkContentsClientBridgeBase {
       const string16& message_text,
       const content::JavaScriptDialogManager::DialogClosedCallback& callback)
       OVERRIDE;
+  virtual void ShowNotification(
+      const content::ShowDesktopNotificationHostMsgParams& params,
+      bool worker,
+      int process_id,
+      int route_id)
+      OVERRIDE;
+  virtual void CancelNotification(
+      int notification_id,
+      int process_id,
+      int route_id) OVERRIDE;
 
   bool OnReceivedHttpAuthRequest(const base::android::JavaRef<jobject>& handler,
                                  const std::string& host,
@@ -60,6 +70,14 @@ class XWalkContentsClientBridge : public XWalkContentsClientBridgeBase {
   void ProceedSslError(JNIEnv* env, jobject obj, jboolean proceed, jint id);
   void ConfirmJsResult(JNIEnv*, jobject, int id, jstring prompt);
   void CancelJsResult(JNIEnv*, jobject, int id);
+  void NotificationDisplayed(
+      JNIEnv*, jobject, int id, int process_id, int route_id);
+  void NotificationError(
+      JNIEnv*, jobject, int id, jstring error, int process_id, int route_id);
+  void NotificationClicked(
+      JNIEnv*, jobject, int id, int process_id, int route_id);
+  void NotificationClosed(
+      JNIEnv*, jobject, int id, bool by_user, int process_id, int route_id);
 
  private:
   JavaObjectWeakGlobalRef java_ref_;

@@ -108,6 +108,11 @@ public class XWalkViewShellActivity extends Activity {
         return super.onKeyUp(keyCode, event);
     }
 
+    @Override
+    public void onNewIntent(Intent intent) {
+    	if (!mView.onNewIntent(intent)) super.onNewIntent(intent);
+    }
+
     private void waitForDebuggerIfNeeded() {
         if (CommandLine.getInstance().hasSwitch(CommandLine.WAIT_FOR_JAVA_DEBUGGER)) {
             Log.e(TAG, "Waiting for Java debugger to connect...");

@@ -27,9 +27,13 @@
 #if defined(OS_ANDROID)
 #include "base/android/path_utils.h"
 #include "base/base_paths_android.h"
+#include "content/public/browser/resource_context.h"
+#include "content/public/common/show_desktop_notification_params.h"
 #include "xwalk/runtime/browser/android/xwalk_cookie_access_policy.h"
 #include "xwalk/runtime/browser/runtime_resource_dispatcher_host_delegate_android.h"
 #include "xwalk/runtime/browser/xwalk_browser_main_parts_android.h"
+#include "xwalk/runtime/browser/android/xwalk_contents_client_bridge.h"
+#include "xwalk/runtime/browser/runtime_resource_dispatcher_host_delegate.h"
 #include "xwalk/runtime/common/android/xwalk_globals_android.h"
 #endif
 
@@ -199,6 +203,41 @@ bool XWalkContentBrowserClient::AllowSetCookie(
 }
 
 #if defined(OS_ANDROID)
+void XWalkContentBrowserClient::RequestDesktopNotificationPermission(
+    const GURL& source_origin,
+    int callback_context,
+    int render_process_id,
+    int render_view_id) {
+}
+
+WebKit::WebNotificationPresenter::Permission
+    XWalkContentBrowserClient::CheckDesktopNotificationPermission(
+        const GURL& source_url,
+        content::ResourceContext* context,
+        int render_process_id) {
+  return WebKit::WebNotificationPresenter::PermissionAllowed;
+}
+
+void XWalkContentBrowserClient::ShowDesktopNotification(
+    const content::ShowDesktopNotificationHostMsgParams& params,
+    int render_process_id,
+    int render_view_id,
+    bool worker) {
+  XWalkContentsClientBridgeBase* bridge =
+      XWalkContentsClientBridgeBase::FromID(render_process_id, render_view_id);
+  bridge->ShowNotification(params, worker, render_process_id, render_view_id);
+}
+
+void XWalkContentBrowserClient::CancelDesktopNotification(
+    int render_process_id,
+    int render_view_id,
+    int notification_id) {
+  XWalkContentsClientBridgeBase* bridge =
+      XWalkContentsClientBridgeBase::FromID(render_process_id, render_view_id);
+  bridge->CancelNotification(
+      notification_id, render_process_id, render_view_id);
+}
+
 void XWalkContentBrowserClient::GetAdditionalMappedFilesForChildProcess(
     const CommandLine& command_line,
     int child_process_id,

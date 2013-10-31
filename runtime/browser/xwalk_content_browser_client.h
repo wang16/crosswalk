@@ -14,6 +14,7 @@
 
 namespace content {
 class BrowserContext;
+class ResourceContext;
 class QuotaPermissionContext;
 class WebContents;
 class WebContentsViewDelegate;
@@ -73,6 +74,25 @@ class XWalkContentBrowserClient : public content::ContentBrowserClient {
                               int render_view_id,
                               net::CookieOptions* options) OVERRIDE;
 #if defined(OS_ANDROID)
+  virtual void RequestDesktopNotificationPermission(
+      const GURL& source_origin,
+      int callback_context,
+      int render_process_id,
+      int render_view_id) OVERRIDE;
+  virtual WebKit::WebNotificationPresenter::Permission
+      CheckDesktopNotificationPermission(
+          const GURL& source_url,
+          content::ResourceContext* context,
+          int render_process_id) OVERRIDE;
+  virtual void ShowDesktopNotification(
+      const content::ShowDesktopNotificationHostMsgParams& params,
+      int render_process_id,
+      int render_view_id,
+      bool worker) OVERRIDE;
+  virtual void CancelDesktopNotification(
+      int render_process_id,
+      int render_view_id,
+      int notification_id) OVERRIDE;
   virtual void GetAdditionalMappedFilesForChildProcess(
       const CommandLine& command_line,
       int child_process_id,

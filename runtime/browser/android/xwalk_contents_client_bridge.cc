@@ -11,6 +11,8 @@
 #include "base/android/jni_string.h"
 #include "base/callback.h"
 #include "content/public/browser/browser_thread.h"
+#include "content/public/browser/render_view_host.h"
+#include "content/public/common/show_desktop_notification_params.h"
 #include "jni/XWalkContentsClientBridge_jni.h"
 #include "net/cert/x509_certificate.h"
 #include "url/gurl.h"
@@ -22,6 +24,7 @@ using base::android::ConvertUTF16ToJavaString;
 using base::android::JavaRef;
 using base::android::ScopedJavaLocalRef;
 using content::BrowserThread;
+using content::RenderViewHost;
 
 namespace xwalk {
 
@@ -172,6 +175,54 @@ bool XWalkContentsClientBridge::OnReceivedHttpAuthRequest(
       env, obj.obj(), handler.obj(), jhost.obj(), jrealm.obj());
   return true;
 }
+
+void XWalkContentsClientBridge::ShowNotification(
+    const content::ShowDesktopNotificationHostMsgParams& params,
+    bool worker,
+    int process_id,
+    int route_id) {
+  DCHECK(BrowserThread::CurrentlyOn(BrowserThread::UI));
+  JNIEnv* env = AttachCurrentThread();
+
+  ScopedJavaLocalRef<jobject> obj = java_ref_.get(env);
+  if (obj.is_null())
+    return;
+
+  if (params.is_html) {
+    NOTIMPLEMENTED() << "Web Notification using html is not implemented";
+  } else {
+    ScopedJavaLocalRef<jstring> jtitle(
+      ConvertUTF16ToJavaString(env, params.title));
+    ScopedJavaLocalRef<jstring> jbody(
+      ConvertUTF16ToJavaString(env, params.body));
+    ScopedJavaLocalRef<jstring> jicon(
+      ConvertUTF8ToJavaString(env, params.icon_url.spec()));
+    ScopedJavaLocalRef<jstring> jreplace_id(
+      ConvertUTF16ToJavaString(env, params.replace_id));
+
+    Java_XWalkContentsClientBridge_showNotification(
+        env, obj.obj(), jtitle.obj(), jbody.obj(), jicon.obj(),
+        jreplace_id.obj(), params.notification_id,
+        process_id, route_id);
+  }
+}
+
+void XWalkContentsClientBridge::CancelNotification(
+    int notification_id,
+    int process_id,
+    int route_id) {
+  DCHECK(BrowserThread::CurrentlyOn(BrowserThread::UI));
+  JNIEnv* env = AttachCurrentThread();
+
+  ScopedJavaLocalRef<jobject> obj = java_ref_.get(env);
+  if (obj.is_null())
+    return;
+
+  Java_XWalkContentsClientBridge_cancelNotification(
+      env, obj.obj(), notification_id,
+      process_id, route_id);
+}
+
 void XWalkContentsClientBridge::ConfirmJsResult(JNIEnv* env,
                                                 jobject,
                                                 int id,
@@ -195,6 +246,52 @@ void XWalkContentsClientBridge::CancelJsResult(JNIEnv*, jobject, int id) {
   if (callback)
     callback->Run(false, string16());
   pending_js_dialog_callbacks_.Remove(id);
+}
+
+void XWalkContentsClientBridge::NotificationDisplayed(
+    JNIEnv*, jobject, int id, int process_id, int route_id) {
+  DCHECK(BrowserThread::CurrentlyOn(BrowserThread::UI));
+  RenderViewHost* rvh = RenderViewHost::FromID(
+      process_id, route_id);
+  if (!rvh)
+    return;
+  rvh->DesktopNotificationPostDisplay(id);
+}
+
+void XWalkContentsClientBridge::NotificationError(
+    JNIEnv* env, jobject, int id, jstring error,
+    int process_id, int route_id) {
+  DCHECK(BrowserThread::CurrentlyOn(BrowserThread::UI));
+  RenderViewHost* rvh = RenderViewHost::FromID(
+      process_id, route_id);
+  if (!rvh)
+    return;
+  string16 error_text;
+  if (error) {
+    error_text = ConvertJavaStringToUTF16(env, error);
+  }
+  rvh->DesktopNotificationPostError(id, error_text);
+}
+
+void XWalkContentsClientBridge::NotificationClicked(
+    JNIEnv*, jobject, int id, int process_id, int route_id) {
+  DCHECK(BrowserThread::CurrentlyOn(BrowserThread::UI));
+  RenderViewHost* rvh = RenderViewHost::FromID(
+      process_id, route_id);
+  if (!rvh)
+    return;
+  rvh->DesktopNotificationPostClick(id);
+}
+
+void XWalkContentsClientBridge::NotificationClosed(
+    JNIEnv*, jobject, int id, bool by_user,
+    int process_id, int route_id) {
+  DCHECK(BrowserThread::CurrentlyOn(BrowserThread::UI));
+  RenderViewHost* rvh = RenderViewHost::FromID(
+      process_id, route_id);
+  if (!rvh)
+    return;
+  rvh->DesktopNotificationPostClose(id, by_user);
 }
 
 bool RegisterXWalkContentsClientBridge(JNIEnv* env) {
