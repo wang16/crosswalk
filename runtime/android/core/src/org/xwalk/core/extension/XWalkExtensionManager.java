@@ -23,6 +23,7 @@ import java.util.HashMap;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xwalk.core.extension.api.box2d.Box2DExtension;
 import org.xwalk.core.extension.api.contacts.Contacts;
 import org.xwalk.core.extension.api.device_capabilities.DeviceCapabilities;
 import org.xwalk.core.extension.api.launchscreen.LaunchScreenExtension;
@@ -205,6 +206,16 @@ public class XWalkExtensionManager implements XWalkExtensionContext {
                 new Messaging(jsApiContent, this);
             } catch(IOException e) {
                 Log.e(TAG, "Failed to read JS API file: " + Messaging.JS_API_PATH);
+            }
+        }
+        {
+            String jsApiContent = "";
+            try {
+                jsApiContent = getExtensionJSFileContent(
+                        mContext, Box2DExtension.JS_API_PATH, true);
+                new Box2DExtension(jsApiContent, this);
+            } catch(IOException e) {
+                Log.e(TAG, "Failed to read JS API file: " + Box2DExtension.JS_API_PATH);
             }
         }
     }

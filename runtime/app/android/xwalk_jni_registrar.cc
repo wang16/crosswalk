@@ -21,6 +21,8 @@
 #include "xwalk/runtime/browser/android/xwalk_settings.h"
 #include "xwalk/runtime/browser/android/xwalk_web_contents_delegate.h"
 
+#include "xwalk/box2d_jni/box2d_jni.h"
+
 namespace xwalk {
 
 static base::android::RegistrationMethod kXWalkRegisteredMethods[] = {
@@ -42,6 +44,7 @@ static base::android::RegistrationMethod kXWalkRegisteredMethods[] = {
   { "XWalkHttpAuthHandler", RegisterXWalkHttpAuthHandler },
   { "XWalkSettings", RegisterXWalkSettings },
   { "XWalkWebContentsDelegate", RegisterXWalkWebContentsDelegate },
+  { "Box2DExtension", RegisterXWalkBox2DExtension },
 };
 
 bool RegisterJni(JNIEnv* env) {

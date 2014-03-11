@@ -296,6 +296,7 @@
         'additional_input_paths': [
           '<(PRODUCT_DIR)/runtime_client_embedded_shell/assets/extensions-config.json',
           '<(PRODUCT_DIR)/runtime_client_embedded_shell/assets/index.html',
+          '<(PRODUCT_DIR)/runtime_client_embedded_shell/assets/jsapi/box2d_api.js',
           '<(PRODUCT_DIR)/runtime_client_embedded_shell/assets/jsapi/device_capabilities_api.js',
           '<(PRODUCT_DIR)/runtime_client_embedded_shell/assets/jsapi/launch_screen_api.js',
           '<(PRODUCT_DIR)/runtime_client_embedded_shell/assets/jsapi/presentation_api.js',
@@ -327,6 +328,7 @@
         {
           'destination': '<(PRODUCT_DIR)/runtime_client_embedded_shell/assets/jsapi',
           'files': [
+            'experimental/box2d/box2d_api.js',
             'experimental/launch_screen/launch_screen_api.js',
             'experimental/presentation/presentation_api.js',
             'sysapps/device_capabilities/device_capabilities_api.js',

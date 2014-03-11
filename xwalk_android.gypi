@@ -14,8 +14,10 @@
         'xwalk_core_extensions_native_jni',
         'xwalk_core_jar_jni',
         'xwalk_core_native_jni',
+        'xwalk_extensions_box2d_native_jni',
         'xwalk_pak',
         'xwalk_runtime',
+        'box2d_jni/box2d_jni.gyp:box2d',
       ],
       'include_dirs': [
         '..',
@@ -191,6 +193,17 @@
       'includes': ['../build/jni_generator.gypi'],
     },
     {
+      'target_name': 'xwalk_extensions_box2d_native_jni',
+      'type': 'none',
+      'variables': {
+        'jni_gen_package': 'xwalk',
+      },
+      'sources': [
+        'runtime/android/core/src/org/xwalk/core/extension/api/box2d/Box2DExtension.java',
+      ],
+      'includes': ['../build/jni_generator.gypi'],
+    },
+    {
       'target_name': 'xwalk_runtime_lib_apk',
       'type': 'none',
       'dependencies': [
@@ -206,6 +219,7 @@
         'resource_dir': 'runtime/android/runtime_lib/res',
         'native_lib_target': 'libxwalkcore',
         'additional_input_paths': [
+          '<(PRODUCT_DIR)/xwalk_runtime_lib/assets/jsapi/box2d_api.js',
           '<(PRODUCT_DIR)/xwalk_runtime_lib/assets/jsapi/contacts_api.js',
           '<(PRODUCT_DIR)/xwalk_runtime_lib/assets/jsapi/device_capabilities_api.js',
           '<(PRODUCT_DIR)/xwalk_runtime_lib/assets/jsapi/launch_screen_api.js',
@@ -242,6 +256,7 @@
         {
           'destination': '<(PRODUCT_DIR)/xwalk_runtime_lib/assets/jsapi',
           'files': [
+            'experimental/box2d/box2d_api.js',
             'experimental/launch_screen/launch_screen_api.js',
             'experimental/presentation/presentation_api.js',
             'runtime/android/core/src/org/xwalk/core/extension/api/contacts/contacts_api.js',

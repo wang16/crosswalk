@@ -1,13 +1,19 @@
 // Copyright (c) 2014 Intel Corporation. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+#include "box2d_jni.h"
 
-#include <jni.h>
 #include <map>
 #include <string>
 
 #include "Box2D.h"
+#include "base/android/jni_string.h"
+#include "jni/Box2DExtension_jni.h"
 
+using base::android::ConvertJavaStringToUTF8;
+using base::android::ConvertUTF8ToJavaString;
+
+namespace xwalk {
 // TODO(nhu): fix the global variables.
 namespace {
 int g_next_world_id = 0;
@@ -51,8 +57,12 @@ static b2Fixture* getFixtureById(int id, bool erase = false) {
 }
 }  // namespace
 
-jint Java_org_xwalk_core_extension_api_box2d_Box2DExtension_createWorld(
-    JNIEnv * env, jobject thiz, jdouble x, jdouble y, jboolean do_sleep) {
+namespace box2d {
+
+jint CreateWorld(JNIEnv* env, jobject jcaller,
+    jdouble x,
+    jdouble y,
+    jboolean do_sleep) {
   b2Vec2 gravity(x, y);
   b2World* world = new b2World(gravity);
   int id = g_next_world_id++;
@@ -61,7 +71,9 @@ jint Java_org_xwalk_core_extension_api_box2d_Box2DExtension_createWorld(
   return id;
 }
 
-void deleteBody(int world_id, int body_id) {
+void DeleteBody(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jint body_id) {
   b2World* world = getWorldById(world_id);
   b2Body* body = getBodyById(body_id, true);
   if (!world || !body)
@@ -70,7 +82,10 @@ void deleteBody(int world_id, int body_id) {
   world->DestroyBody(body);
 }
 
-void createDistanceJoint(int world_id, int body_a_id, int body_b_id) {
+void CreateDistanceJoint(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jint body_a_id,
+    jint body_b_id) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return;
@@ -89,14 +104,19 @@ void createDistanceJoint(int world_id, int body_a_id, int body_b_id) {
   world->CreateJoint(&joint_def);
 }
 
-void setContinuous(int world_id, bool continuous) {
+void SetContinuous(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jboolean continuous) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return;
-  world->SetContinuousPhysics(continuous);
+  world->SetContinuousPhysics(continuous == JNI_TRUE);
 }
 
-void setGravity(int world_id, double x, double y) {
+void SetGravity(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jdouble x,
+    jdouble y) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return;
@@ -107,65 +127,82 @@ void setGravity(int world_id, double x, double y) {
   return;
 }
 
-void step(int world_id, double dt,
-          int velocity_iterations, int position_iterations) {
+jstring Step(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jdouble dt,
+    jint velocity_iterations,
+    jint position_iterations) {
   b2World* world = getWorldById(world_id);
   if (!world)
-    return;
+    return NULL;
   world->Step(dt, velocity_iterations, position_iterations);
   b2Body* next_body = world->GetBodyList();
   next_body = world->GetBodyList();
-  // TODO: create java arraylist
+  Java_Box2DExtension_createArray(env, jcaller);
+  std::string body_array = "";
+  int count = 0;
   while(next_body) {
+    char buff[128];
     int body_id =
         *(reinterpret_cast<int*>(next_body->GetUserData()));
     float32 x = next_body->GetPosition().x;
     float32 y = next_body->GetPosition().y;
     float32 angle = next_body->GetAngle();
-    // TODO: call java arraylist add (id,x,y,angle)
+    sprintf(buff, ",%d,%.6f,%.6f,%.6f", body_id, x, y, angle);
+    body_array = body_array + buff;
     next_body = next_body->GetNext();
+    count ++;
   }
-
-  return; // TODO: return jobject for arraylist and change the function type
+  char buff[20];
+  sprintf(buff, "{\"data\": [%d", count);
+  body_array = buff + body_array + "]}";
+  return env->NewStringUTF(body_array.c_str());
 }
 
-void getLastContacts(int world_id) {
+void GetLastContacts(JNIEnv* env, jobject jcaller,
+    jint world_id) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return;
   b2Contact* next_contact = world->GetContactList();
-  // TODO: create java arraylist
+  Java_Box2DExtension_createArray(env, jcaller);
   while(next_contact) {
     b2Fixture * fa = next_contact->GetFixtureA();
     b2Fixture * fb = next_contact->GetFixtureB();
     int fa_id = *(reinterpret_cast<int*>(fa->GetUserData()));
     int fb_id = *(reinterpret_cast<int*>(fb->GetUserData()));
     bool is_touching = next_contact->IsTouching();
-    // TODO: call java arraylist add (fa_id,fb_id,is_touching)
+    Java_Box2DExtension_createContact(
+        env, jcaller, fa_id, fb_id, is_touching ? JNI_TRUE : JNI_FALSE);
     next_contact = next_contact->GetNext();
   }
-
-  return; // TODO: return jobject for arraylist and change the function type
 }
 
-void clearForces(int world_id) {
+void ClearForces(JNIEnv* env, jobject jcaller,
+    jint world_id) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return;
   world->ClearForces();
 }
 
-void setSensor(int world_id, int fixture_id, bool is_sensor) {
+void SetSensor(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jint fixture_id,
+    jboolean is_sensor) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return;
   b2Fixture* fixture = getFixtureById(fixture_id);
   if (!fixture)
     return;
-  fixture->SetSensor(is_sensor);
+  fixture->SetSensor(is_sensor == JNI_TRUE);
 }
 
-void setDensity(int world_id, int fixture_id, float density) {
+void SetDensity(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jint fixture_id,
+    jfloat density) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return;
@@ -175,7 +212,10 @@ void setDensity(int world_id, int fixture_id, float density) {
   fixture->SetDensity(density);
 }
 
-void setFriction(int world_id, int fixture_id, float friction) {
+void SetFriction(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jint fixture_id,
+    jfloat friction) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return;
@@ -185,7 +225,10 @@ void setFriction(int world_id, int fixture_id, float friction) {
   fixture->SetFriction(friction);
 }
 
-void setRestitution(int world_id, int fixture_id, float restitution) {
+void SetRestitution(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jint fixture_id,
+    jfloat restitution) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return;
@@ -195,7 +238,11 @@ void setRestitution(int world_id, int fixture_id, float restitution) {
   fixture->SetRestitution(restitution);
 }
 
-int createBody(int world_id, int type, double x, double y) {
+jint CreateBody(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jint type,
+    jdouble x,
+    jdouble y) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return -1;
@@ -215,14 +262,21 @@ int createBody(int world_id, int type, double x, double y) {
   return *id;
 }
 
-int createFixture(int world_id, int body_id,
-                   double friction, double restitution, double density,
-                   std::string type, double param1, double param2) {
+jint CreateFixture(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jint body_id,
+    jdouble friction,
+    jdouble restitution,
+    jdouble density,
+    jstring jtype,
+    jdouble param1,
+    jdouble param2) {
   b2Shape* shape = NULL;
+  std::string type = ConvertJavaStringToUTF8(env, jtype);
   if (type == std::string("circle")) {
     double radius = param1;
     shape = new b2CircleShape();
-    shape->m_radius = radius;
+    shape->m_radius = param1;
   } else if (type == std::string("box")) {
     double width = param1;
     double height = param2;
@@ -266,7 +320,12 @@ int createFixture(int world_id, int body_id,
   return *fixture_id;
 }
 
-void setBodyTransform(int world_id, int body_id, double x, double y, double angle) {
+void SetBodyTransform(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jint body_id,
+    jdouble x,
+    jdouble y,
+    jdouble angle) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return;
@@ -279,7 +338,9 @@ void setBodyTransform(int world_id, int body_id, double x, double y, double angl
   body->SetTransform(position, angle);
 }
 
-void getLinearVelocity(int world_id, int body_id) {
+void GetLinearVelocity(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jint body_id) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return;
@@ -290,10 +351,12 @@ void getLinearVelocity(int world_id, int body_id) {
 
   b2Vec2 v = body->GetLinearVelocity();
 
-  return; // TODO: return jobject with v.x and v.y, and change function type
+  Java_Box2DExtension_returnPoint(env, jcaller, v.x, v.y);
 }
 
-void getWorldCenter(int world_id, int body_id) {
+void GetWorldCenter(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jint body_id) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return;
@@ -304,10 +367,12 @@ void getWorldCenter(int world_id, int body_id) {
 
   b2Vec2 p = body->GetWorldCenter();
 
-  return; // TODO: return jobject with p.x and p.y, and change function type
+  Java_Box2DExtension_returnPoint(env, jcaller, p.x, p.y);
 }
 
-void getLocalCenter(int world_id, int body_id) {
+void GetLocalCenter(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jint body_id) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return;
@@ -318,12 +383,17 @@ void getLocalCenter(int world_id, int body_id) {
 
   b2Vec2 p = body->GetLocalCenter();
 
-  return; // TODO: return jobject with p.x and p.y, and change function type
+  Java_Box2DExtension_returnPoint(env, jcaller, p.x, p.y);
 }
 
-void applyImpulse(int world_id, int body_id,
-                  double impluse_x, double impluse_y,
-                  double point_x, double point_y, bool wake) {
+void ApplyImpulse(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jint body_id,
+    jdouble impluse_x,
+    jdouble impluse_y,
+    jdouble point_x,
+    jdouble point_y,
+    jboolean wake) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return;
@@ -334,10 +404,12 @@ void applyImpulse(int world_id, int body_id,
 
   b2Vec2 impluse(impluse_x, impluse_y);
   b2Vec2 point(point_x, point_y);
-  body->ApplyLinearImpulse(impluse, point, wake);
+  body->ApplyLinearImpulse(impluse, point, wake == JNI_TRUE);
 }
 
-bool isAwake(int world_id, int body_id) {
+jboolean IsAwake(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jint body_id) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return false;
@@ -347,10 +419,12 @@ bool isAwake(int world_id, int body_id) {
     return false;
 
   bool wake = body->IsAwake();
-  return wake;
+  return wake ? JNI_TRUE : JNI_FALSE;
 }
 
-float getAngularVelocity(int world_id, int body_id) {
+jfloat GetAngularVelocity(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jint body_id) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return 0;
@@ -363,7 +437,10 @@ float getAngularVelocity(int world_id, int body_id) {
   return v;
 }
 
-void setAwake(int world_id, int body_id, bool wake) {
+void SetAwake(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jint body_id,
+    jboolean wake) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return;
@@ -372,10 +449,14 @@ void setAwake(int world_id, int body_id, bool wake) {
   if (!body)
     return;
 
-  body->SetAwake(wake);
+  body->SetAwake(wake == JNI_TRUE);
 }
 
-void setLinearVelocity(int world_id, int body_id, double x, double y) {
+void SetLinearVelocity(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jint body_id,
+    jdouble x,
+    jdouble y) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return;
@@ -388,7 +469,12 @@ void setLinearVelocity(int world_id, int body_id, double x, double y) {
   body->SetLinearVelocity(v);
 }
 
-void applyForceToCenter(int world_id, int body_id, double x, double y, bool wake) {
+void ApplyForceToCenter(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jint body_id,
+    jdouble x,
+    jdouble y,
+    jboolean wake) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return;
@@ -398,10 +484,13 @@ void applyForceToCenter(int world_id, int body_id, double x, double y, bool wake
     return;
 
   b2Vec2 force(x, y);
-  body->ApplyForceToCenter(force, wake);
+  body->ApplyForceToCenter(force, wake == JNI_TRUE);
 }
 
-void setLinearDamping(int world_id, int body_id, double damp) {
+void SetLinearDamping(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jint body_id,
+    jdouble damp) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return;
@@ -413,7 +502,10 @@ void setLinearDamping(int world_id, int body_id, double damp) {
   body->SetLinearDamping(damp);
 }
 
-void setAngularVelocity(int world_id, int body_id, double w) {
+void SetAngularVelocity(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jint body_id,
+    jdouble w) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return;
@@ -425,7 +517,10 @@ void setAngularVelocity(int world_id, int body_id, double w) {
   body->SetAngularVelocity(w);
 }
 
-void setActive(int world_id, int body_id, bool active) {
+void SetActive(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jint body_id,
+    jboolean active) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return;
@@ -434,10 +529,12 @@ void setActive(int world_id, int body_id, bool active) {
   if (!body)
     return;
 
-  body->SetActive(active);
+  body->SetActive(active == JNI_TRUE);
 }
 
-void getObjectContacts(int world_id, int body_id) {
+void GetObjectContacts(JNIEnv* env, jobject jcaller,
+    jint world_id,
+    jint body_id) {
   b2World* world = getWorldById(world_id);
   if (!world)
     return;
@@ -447,14 +544,21 @@ void getObjectContacts(int world_id, int body_id) {
     return;
   
   b2ContactEdge* next_edge = body->GetContactList();
-  // TODO: create java arraylist
+  Java_Box2DExtension_createArray(env, jcaller);
+
   while(next_edge) {
     b2Body* other = next_edge->other;
     int other_id =
         *(reinterpret_cast<int*>(other->GetUserData()));
-    // TODO: call java arraylist add with other_id
+    Java_Box2DExtension_createInteger(env, jcaller, other_id);
     next_edge = next_edge->next;
   }
-
-  return; // TODO: return jobject for arraylist and change function type
 }
+
+}  // namespace box2d
+
+bool RegisterXWalkBox2DExtension(JNIEnv* env) {
+  return box2d::RegisterNativesImpl(env) >= 0; 
+}
+
+}  // namespace xwalk

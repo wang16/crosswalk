@@ -140,6 +140,7 @@ class TestMakeApk(unittest.TestCase):
     if self._mode.find('embedded') != -1:
       embedded_related_files = ['xwalk.pak',
                                 'device_capabilities_api.js',
+                                'box2d_api.js',
                                 'launch_screen_api.js',
                                 'presentation_api.js',
                                 'screen_orientation_api.js']
