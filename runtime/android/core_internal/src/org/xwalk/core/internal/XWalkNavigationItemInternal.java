@@ -9,14 +9,14 @@ import org.chromium.content.browser.NavigationEntry;
 /**
  * This class represents a navigation item and is managed in XWalkNavigationHistoryInternal.
  */
-public final class XWalkNavigationItemInternal implements Cloneable {
+public class XWalkNavigationItemInternal implements Cloneable {
     private NavigationEntry mEntry;
 
     XWalkNavigationItemInternal(NavigationEntry entry) {
         mEntry = entry;
     }
 
-    XWalkNavigationItemInternal(XWalkNavigationItemInternal item) {
+    public XWalkNavigationItemInternal(XWalkNavigationItemInternal item) {
         mEntry = item.mEntry;
     }
 

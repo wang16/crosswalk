@@ -36,6 +36,8 @@ import org.chromium.content.browser.NavigationHistory;
 import org.chromium.media.MediaPlayerBridge;
 import org.chromium.ui.base.ActivityWindowAndroid;
 
+import org.xwalk.core.JavascriptInterface;
+
 @JNINamespace("xwalk")
 /**
  * This class is the implementation class for XWalkViewInternal by calling internal

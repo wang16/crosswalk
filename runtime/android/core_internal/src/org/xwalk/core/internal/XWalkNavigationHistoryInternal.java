@@ -12,7 +12,7 @@ import org.chromium.content.browser.NavigationHistory;
  * This class represents a navigation history for a XWalkViewInternal instance.
  * It's not thread-safe and should be only called on UI thread.
  */
-public final class XWalkNavigationHistoryInternal implements Cloneable, Serializable {
+public class XWalkNavigationHistoryInternal implements Cloneable, Serializable {
     private NavigationHistory mHistory;
     private XWalkViewInternal mXWalkView;
 
@@ -21,7 +21,7 @@ public final class XWalkNavigationHistoryInternal implements Cloneable, Serializ
         mHistory = history;
     }
 
-    XWalkNavigationHistoryInternal(XWalkNavigationHistoryInternal history) {
+    public XWalkNavigationHistoryInternal(XWalkNavigationHistoryInternal history) {
         mXWalkView = history.mXWalkView;
         mHistory = history.mHistory;
     }
