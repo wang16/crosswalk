@@ -82,7 +82,7 @@ public class XWalkUIClientInternal {
     /**
      * The type of JavaScript modal dialog.
      */
-    public enum JavascriptMessageType {
+    public enum JavascriptMessageTypeInternal {
         /** JavaScript alert dialog. */
         JAVASCRIPT_ALERT,
         /** JavaScript confirm dialog. */
@@ -102,8 +102,8 @@ public class XWalkUIClientInternal {
      * @param defaultValue the default value string. Only valid for Prompt dialog.
      * @param result the callback to handle the result from caller.
      */
-    public boolean onJavascriptModalDialog(XWalkViewInternal view, JavascriptMessageType type, String url,
-            String message, String defaultValue, XWalkJavascriptResultInternal result) {
+    public boolean onJavascriptModalDialog(XWalkViewInternal view, JavascriptMessageTypeInternal type,
+            String url, String message, String defaultValue, XWalkJavascriptResultInternal result) {
         switch(type) {
             case JAVASCRIPT_ALERT:
                 return onJsAlert(view, url, message, result);

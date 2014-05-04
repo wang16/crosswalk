@@ -6,7 +6,7 @@ package org.xwalk.core.internal;
 
 import org.chromium.base.ThreadUtils;
 
-class XWalkJavascriptResultHandlerInternal implements XWalkJavascriptResultInternal {
+public class XWalkJavascriptResultHandlerInternal implements XWalkJavascriptResultInternal {
     private XWalkContentsClientBridge mBridge;
     private final int mId;
 

@@ -12,7 +12,7 @@ import org.chromium.content.browser.NavigationHistory;
  * This class represents a navigation history for a XWalkViewInternal instance.
  * It's not thread-safe and should be only called on UI thread.
  */
-public final class XWalkNavigationHistoryInternal implements Cloneable, Serializable {
+public class XWalkNavigationHistoryInternal implements Cloneable, Serializable {
     private NavigationHistory mHistory;
     private XWalkViewInternal mXWalkView;
 
@@ -21,7 +21,7 @@ public final class XWalkNavigationHistoryInternal implements Cloneable, Serializ
         mHistory = history;
     }
 
-    XWalkNavigationHistoryInternal(XWalkNavigationHistoryInternal history) {
+    public XWalkNavigationHistoryInternal(XWalkNavigationHistoryInternal history) {
         mXWalkView = history.mXWalkView;
         mHistory = history.mHistory;
     }
@@ -80,7 +80,7 @@ public final class XWalkNavigationHistoryInternal implements Cloneable, Serializ
     /**
      * The direction for web page navigation.
      */
-    public enum Direction {
+    public enum DirectionInternal {
         /** The backward direction for web page navigation. */
         BACKWARD,
         /** The forward direction for web page navigation. */
@@ -93,7 +93,7 @@ public final class XWalkNavigationHistoryInternal implements Cloneable, Serializ
      * @param direction the direction of navigation.
      * @param steps go back or foward with a given steps.
      */
-    public void navigate(Direction direction, int steps) {
+    public void navigate(DirectionInternal direction, int steps) {
         switch(direction) {
             case FORWARD:
                 mXWalkView.navigateTo(steps);

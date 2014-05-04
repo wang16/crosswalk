@@ -16,7 +16,7 @@ import java.util.Map;
  * Afterwards, the preference could be read from all threads and can impact
  * all XWalkViewInternal instances.
  */
-public final class XWalkPreferencesInternal {
+public class XWalkPreferencesInternal {
     private static HashMap<String, Boolean> sPrefMap = new HashMap<String, Boolean>();
     // Here we use WeakReference to make sure the KeyValueChangeListener instance
     // can be GC-ed to avoid memory leaking issue.

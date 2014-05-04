@@ -510,38 +510,44 @@ class XWalkContentsClientBridge extends XWalkContentsClient
     @CalledByNative
     private void handleJsAlert(String url, String message, int id) {
         if (isOwnerActivityRunning()) {
-            XWalkJavascriptResultHandlerInternal result = new XWalkJavascriptResultHandlerInternal(this, id);
+            XWalkJavascriptResultHandlerInternal result =
+                    new XWalkJavascriptResultHandlerInternal(this, id);
             mXWalkUIClient.onJavascriptModalDialog(mXWalkView,
-                    XWalkUIClientInternal.JavascriptMessageType.JAVASCRIPT_ALERT, url, message, "", result);
+                    XWalkUIClientInternal.JavascriptMessageTypeInternal.JAVASCRIPT_ALERT,
+                    url, message, "", result);
         }
     }
 
     @CalledByNative
     private void handleJsConfirm(String url, String message, int id) {
         if (isOwnerActivityRunning()) {
-            XWalkJavascriptResultHandlerInternal result = new XWalkJavascriptResultHandlerInternal(this, id);
+            XWalkJavascriptResultHandlerInternal result =
+                    new XWalkJavascriptResultHandlerInternal(this, id);
             mXWalkUIClient.onJavascriptModalDialog(mXWalkView,
-                    XWalkUIClientInternal.JavascriptMessageType.JAVASCRIPT_CONFIRM, url, message, "", result);
+                    XWalkUIClientInternal.JavascriptMessageTypeInternal.JAVASCRIPT_CONFIRM,
+                    url, message, "", result);
         }
     }
 
     @CalledByNative
     private void handleJsPrompt(String url, String message, String defaultValue, int id) {
         if (isOwnerActivityRunning()) {
-            XWalkJavascriptResultHandlerInternal result = new XWalkJavascriptResultHandlerInternal(this, id);
+            XWalkJavascriptResultHandlerInternal result =
+                    new XWalkJavascriptResultHandlerInternal(this, id);
             mXWalkUIClient.onJavascriptModalDialog(mXWalkView,
-                    XWalkUIClientInternal.JavascriptMessageType.JAVASCRIPT_PROMPT, url, message, defaultValue,
-                            result);
+                    XWalkUIClientInternal.JavascriptMessageTypeInternal.JAVASCRIPT_PROMPT,
+                    url, message, defaultValue, result);
         }
     }
 
     @CalledByNative
     private void handleJsBeforeUnload(String url, String message, int id) {
         if (isOwnerActivityRunning()) {
-            XWalkJavascriptResultHandlerInternal result = new XWalkJavascriptResultHandlerInternal(this, id);
+            XWalkJavascriptResultHandlerInternal result =
+                    new XWalkJavascriptResultHandlerInternal(this, id);
             mXWalkUIClient.onJavascriptModalDialog(mXWalkView,
-                    XWalkUIClientInternal.JavascriptMessageType.JAVASCRIPT_BEFOREUNLOAD, url, message, "",
-                            result);
+                    XWalkUIClientInternal.JavascriptMessageTypeInternal.JAVASCRIPT_BEFOREUNLOAD,
+                    url, message, "", result);
         }
     }
 
