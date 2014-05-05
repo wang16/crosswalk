@@ -20,6 +20,7 @@ import android.widget.EditText;
 /**
  * This class notifies the embedder UI events/callbacks.
  */
+@XWalkAPI(createExternally = true)
 public class XWalkUIClientInternal {
 
     // Strings for displaying Dialog.
@@ -41,6 +42,7 @@ public class XWalkUIClientInternal {
      * Constructor.
      * @param view the owner XWalkViewInternal instance.
      */
+    @XWalkAPI
     public XWalkUIClientInternal(XWalkViewInternal view) {
         mContext = view.getContext();
         mDecorView = view.getActivity().getWindow().getDecorView();
@@ -66,6 +68,7 @@ public class XWalkUIClientInternal {
      * Request display and focus for this XWalkViewInternal.
      * @param view the owner XWalkViewInternal instance.
      */
+    @XWalkAPI
     public void onRequestFocus(XWalkViewInternal view) {
     }
 
@@ -73,6 +76,7 @@ public class XWalkUIClientInternal {
      * Notify the client to close the given XWalkViewInternal.
      * @param view the owner XWalkViewInternal instance.
      */
+    @XWalkAPI
     public void onJavascriptCloseWindow(XWalkViewInternal view) {
         if (view != null && view.getActivity() != null) {
             view.getActivity().finish();
@@ -83,13 +87,17 @@ public class XWalkUIClientInternal {
      * The type of JavaScript modal dialog.
      */
     /** JavaScript alert dialog. */
-    public final static int JAVASCRIPT_ALERT = 0;
+    @XWalkAPI
+    public static final int JAVASCRIPT_ALERT = 0;
     /** JavaScript confirm dialog. */
-    public final static int JAVASCRIPT_CONFIRM = 1;
+    @XWalkAPI
+    public static final int JAVASCRIPT_CONFIRM = 1;
     /** JavaScript prompt dialog. */
-    public final static int JAVASCRIPT_PROMPT = 2;
+    @XWalkAPI
+    public static final int JAVASCRIPT_PROMPT = 2;
     /** JavaScript dialog for a window-before-unload notification. */
-    public final static int JAVASCRIPT_BEFOREUNLOAD = 3;
+    @XWalkAPI
+    public static final int JAVASCRIPT_BEFOREUNLOAD = 3;
 
     /**
      * Tell the client to display a prompt dialog to the user.
@@ -100,6 +108,7 @@ public class XWalkUIClientInternal {
      * @param defaultValue the default value string. Only valid for Prompt dialog.
      * @param result the callback to handle the result from caller.
      */
+    @XWalkAPI
     public boolean onJavascriptModalDialog(XWalkViewInternal view, int type, String url,
             String message, String defaultValue, XWalkJavascriptResultInternal result) {
         switch(type) {
@@ -124,6 +133,7 @@ public class XWalkUIClientInternal {
      * @param view the owner XWalkViewInternal instance.
      * @param enterFullscreen true if it has entered fullscreen mode.
      */
+    @XWalkAPI
     public void onFullscreenToggled(XWalkViewInternal view, boolean enterFullscreen) {
         Activity activity = view.getActivity();
         if (enterFullscreen) {
@@ -172,6 +182,7 @@ public class XWalkUIClientInternal {
      * @param capture value of the 'capture' attribute of the input tag associated
      *        with this file picker
      */
+    @XWalkAPI
     public void openFileChooser(XWalkViewInternal view, ValueCallback<Uri> uploadFile,
             String acceptType, String capture) {
         uploadFile.onReceiveValue(null);
@@ -183,6 +194,7 @@ public class XWalkUIClientInternal {
      * @param oldScale the old scale before scaling.
      * @param newScale the current scale factor after scaling.
      */
+    @XWalkAPI
     public void onScaleChanged(XWalkViewInternal view, float oldScale, float newScale) {
     }
 

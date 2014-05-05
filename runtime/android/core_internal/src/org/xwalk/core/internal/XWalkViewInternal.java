@@ -142,6 +142,7 @@ import org.xwalk.core.internal.extension.XWalkExtensionManager;
  *   }
  * </pre>
  */
+@XWalkAPI(extendClass = FrameLayout.class, createExternally = true)
 public class XWalkViewInternal extends android.widget.FrameLayout {
 
     static final String PLAYSTORE_DETAIL_URI = "market://details?id=";
@@ -153,8 +154,10 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
     private boolean mIsHidden;
 
     /** Normal reload mode as default. */
+    @XWalkAPI
     public static final int RELOAD_NORMAL = 0;
     /** Reload mode with bypassing the cache. */
+    @XWalkAPI
     public static final int RELOAD_IGNORE_CACHE = 1;
 
     /**
@@ -162,6 +165,11 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * @param context  a Context object used to access application assets.
      * @param attrs    an AttributeSet passed to our parent.
      */
+    @XWalkAPI(preWrapperLines = {"super(%1, %2);"},
+              postWrapperLines = {
+                  "addView(bridge, new FrameLayout.LayoutParams(",
+                  "        FrameLayout.LayoutParams.MATCH_PARENT,",
+                  "        FrameLayout.LayoutParams.MATCH_PARENT));"})
     public XWalkViewInternal(Context context, AttributeSet attrs) {
         super(context, attrs);
 
@@ -176,6 +184,11 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * @param context  a Context object used to access application assets
      * @param activity the activity for this XWalkViewInternal.
      */
+    @XWalkAPI(preWrapperLines = {"super(%1, null);"},
+              postWrapperLines = {
+                  "addView(bridge, new FrameLayout.LayoutParams(",
+                  "        FrameLayout.LayoutParams.MATCH_PARENT,",
+                  "        FrameLayout.LayoutParams.MATCH_PARENT));"})
     public XWalkViewInternal(Context context, Activity activity) {
         super(context, null);
         checkThreadSafety();
@@ -327,6 +340,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * @param url the url for web page/app.
      * @param content the content for the web page/app. Could be empty.
      */
+    @XWalkAPI
     public void load(String url, String content) {
         if (mContent == null) return;
         checkThreadSafety();
@@ -344,6 +358,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * @param url the url for manifest.json.
      * @param content the content for manifest.json.
      */
+    @XWalkAPI
     public void loadAppFromManifest(String url, String content) {
         if (mContent == null) return;
         checkThreadSafety();
@@ -354,6 +369,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * Reload a web app with a given mode.
      * @param mode the reload mode.
      */
+    @XWalkAPI
     public void reload(int mode) {
         if (mContent == null) return;
         checkThreadSafety();
@@ -363,6 +379,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
     /**
      * Stop current loading progress.
      */
+    @XWalkAPI
     public void stopLoading() {
         if (mContent == null) return;
         checkThreadSafety();
@@ -374,6 +391,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * by caller.
      * @return the url for current web page/app.
      */
+    @XWalkAPI
     public String getUrl() {
         if (mContent == null) return null;
         checkThreadSafety();
@@ -385,6 +403,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * by caller.
      * @return the title for current web page/app.
      */
+    @XWalkAPI
     public String getTitle() {
         if (mContent == null) return null;
         checkThreadSafety();
@@ -395,6 +414,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * Get the original url specified by caller.
      * @return the original url.
      */
+    @XWalkAPI
     public String getOriginalUrl() {
         if (mContent == null) return null;
         checkThreadSafety();
@@ -406,6 +426,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * this XWalkViewInternal if any backward/forward and navigation operations.
      * @return the navigation history.
      */
+    @XWalkAPI
     public XWalkNavigationHistoryInternal getNavigationHistory() {
         if (mContent == null) return null;
         checkThreadSafety();
@@ -419,6 +440,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * @param object the supplied Java object, called by JavaScript.
      * @param name the name injected in JavaScript.
      */
+    @XWalkAPI
     public void addJavascriptInterface(Object object, String name) {
         if (mContent == null) return;
         checkThreadSafety();
@@ -430,6 +452,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * @param script the JavaScript string.
      * @param callback the callback to handle the evaluated result.
      */
+    @XWalkAPI
     public void evaluateJavascript(String script, ValueCallback<String> callback) {
         if (mContent == null) return;
         checkThreadSafety();
@@ -441,6 +464,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * will clear the cache for all XWalkViews used.
      * @param includeDiskFiles indicate whether to clear disk files for cache.
      */
+    @XWalkAPI
     public void clearCache(boolean includeDiskFiles) {
         if (mContent == null) return;
         checkThreadSafety();
@@ -451,6 +475,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * Indicate that a HTML element is occupying the whole screen.
      * @return true if any HTML element is occupying the whole screen.
      */
+    @XWalkAPI
     public boolean hasEnteredFullscreen() {
         if (mContent == null) return false;
         checkThreadSafety();
@@ -461,6 +486,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * Leave fullscreen mode if it's. Do nothing if it's not
      * in fullscreen.
      */
+    @XWalkAPI
     public void leaveFullscreen() {
         if (mContent == null) return;
         checkThreadSafety();
@@ -476,6 +502,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * Note that it will globally impact all XWalkViewInternal instances, not limited to
      * just this XWalkViewInternal.
      */
+    @XWalkAPI
     public void pauseTimers() {
         if (mContent == null) return;
         checkThreadSafety();
@@ -489,6 +516,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * Note that it will globally impact all XWalkViewInternal instances, not limited to
      * just this XWalkViewInternal.
      */
+    @XWalkAPI
     public void resumeTimers() {
         if (mContent == null) return;
         checkThreadSafety();
@@ -501,6 +529,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * JavaScript timers.
      * Typically it should be called when the activity for this view is paused.
      */
+    @XWalkAPI
     public void onHide() {
         if (mContent == null || mIsHidden) return;
         mExtensionManager.onPause();
@@ -513,6 +542,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * this during resuming this activity if they call onHide.
      * Typically it should be called when the activity for this view is resumed.
      */
+    @XWalkAPI
     public void onShow() {
         if (mContent == null || !mIsHidden ) return;
         mExtensionManager.onResume();
@@ -523,6 +553,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
     /**
      * Release internal resources occupied by this XWalkViewInternal.
      */
+    @XWalkAPI
     public void onDestroy() {
         destroy();
     }
@@ -536,6 +567,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * @param resultCode passed from android.app.Activity.onActivityResult().
      * @param data passed from android.app.Activity.onActivityResult().
      */
+    @XWalkAPI
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (mContent == null) return;
         mExtensionManager.onActivityResult(requestCode, resultCode, data);
@@ -549,6 +581,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * android.app.Activity.onNewIntent()</a>.
      * @param intent passed from android.app.Activity.onNewIntent().
      */
+    @XWalkAPI
     public boolean onNewIntent(Intent intent) {
         if (mContent == null) return false;
         return mContent.onNewIntent(intent);
@@ -559,6 +592,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * afterwards restoring.
      * @param outState the saved state for restoring.
      */
+    @XWalkAPI
     public boolean saveState(Bundle outState) {
         if (mContent == null) return false;
         mContent.saveState(outState);
@@ -570,6 +604,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * @param inState the state saved from saveState().
      * @return true if it can restore the state.
      */
+    @XWalkAPI
     public boolean restoreState(Bundle inState) {
         if (mContent == null) return false;
         if (mContent.restoreState(inState) != null) return true;
@@ -581,6 +616,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * @return the string of API level.
      */
     // TODO(yongsheng): make it static?
+    @XWalkAPI
     public String getAPIVersion() {
         return "2.0";
     }
@@ -590,6 +626,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * @return the string of Crosswalk.
      */
     // TODO(yongsheng): make it static?
+    @XWalkAPI
     public String getXWalkVersion() {
         if (mContent == null) return null;
         return mContent.getXWalkVersion();
@@ -600,6 +637,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * to UI.
      * @param client the XWalkUIClientInternal defined by callers.
      */
+    @XWalkAPI
     public void setUIClient(XWalkUIClientInternal client) {
         if (mContent == null) return;
         checkThreadSafety();
@@ -611,6 +649,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * to resource loading.
      * @param client the XWalkResourceClientInternal defined by callers.
      */
+    @XWalkAPI
     public void setResourceClient(XWalkResourceClientInternal client) {
         if (mContent == null) return;
         checkThreadSafety();
@@ -624,6 +663,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      * @param keyCode passed from android.view.View.onKeyUp().
      * @param event passed from android.view.View.onKeyUp().
      */
+    @XWalkAPI
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
@@ -671,6 +711,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      *
      * @hide
      */
+    @XWalkAPI
     public String enableRemoteDebugging(int allowedUid) {
         if (mContent == null) return null;
         checkThreadSafety();

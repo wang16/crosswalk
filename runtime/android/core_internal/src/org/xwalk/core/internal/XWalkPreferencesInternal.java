@@ -16,6 +16,7 @@ import java.util.Map;
  * Afterwards, the preference could be read from all threads and can impact
  * all XWalkViewInternal instances.
  */
+@XWalkAPI(noInstance = true)
 public class XWalkPreferencesInternal {
     private static HashMap<String, Boolean> sPrefMap = new HashMap<String, Boolean>();
     // Here we use WeakReference to make sure the KeyValueChangeListener instance
@@ -28,6 +29,7 @@ public class XWalkPreferencesInternal {
     /**
      * The key string to enable/disable remote debugging.
      */
+    @XWalkAPI
     public static final String REMOTE_DEBUGGING = "remote-debugging";
 
     /**
@@ -65,6 +67,7 @@ public class XWalkPreferencesInternal {
      * @param key the string name of the key.
      * @param enabled true if setting it as enabled.
      */
+    @XWalkAPI
     public static synchronized void setValue(String key, boolean enabled) throws RuntimeException {
         checkKey(key);
         // If the listener list is not empty, we consider the preference is
@@ -85,6 +88,7 @@ public class XWalkPreferencesInternal {
      * @param key the string name of the key.
      * @return true if it's enabled.
      */
+    @XWalkAPI
     public static synchronized boolean getValue(String key) throws RuntimeException {
         checkKey(key);
         return sPrefMap.get(key);

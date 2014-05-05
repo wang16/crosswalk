@@ -1,4 +1,8 @@
 {
+  'variables': {
+    'reflection_java_dir': '<(PRODUCT_DIR)/gen/xwalk_core_reflection_layer',
+    'empty_src_dir': '<(DEPTH)/xwalk/runtime/android/core_empty',
+  },
   'targets': [
     {
       'target_name': 'libxwalkcore',
@@ -49,15 +53,75 @@
       'includes': ['../build/java.gypi'],
     },
     {
-      'target_name': 'xwalk_core_java',
+      'target_name': 'xwalk_core_reflection_layer_generator_java',
       'type': 'none',
       'dependencies': [
         'xwalk_core_internal_java',
       ],
       'variables': {
-        'java_in_dir': 'runtime/android/core',
+        'java_in_dir': 'tools/reflection_generator',
       },
       'includes': ['../build/java.gypi'],
+      'all_dependent_settings': {
+        'variables': {
+          'generator_jar_path': '<(jar_final_path)',
+        },
+      },
+    },
+    {
+      'target_name': 'xwalk_core_reflection_layer_java_gen',
+      'type': 'none',
+      'dependencies': [
+        'xwalk_core_reflection_layer_generator_java',
+      ],
+      'variables': {
+        'timestamp': '<(reflection_java_dir)/gen.timestamp',
+        'android_jar': '<(android_sdk)/android.jar',
+        'input_jars_paths': [ '<(android_jar)' ],
+      },
+      'all_dependent_settings': {
+        'variables': {
+          'reflection_layer_gen_timestamp': '<(timestamp)',
+        },
+      },
+      'actions': [
+        {
+          'action_name': 'generate_reflection',
+          'message': 'Creating reflection layer',
+          'inputs': [
+            'tools/reflection_generator/generator.py',
+            '>(generator_jar_path)',
+          ],
+          'outputs': [
+            '<(timestamp)',
+          ],
+          'action': [
+            'python', 'tools/reflection_generator/generator.py',
+            '--classpath=>(input_jars_paths)',
+            '--source=runtime/android/core_internal/src',
+            '--output=<(reflection_java_dir)',
+            '--stamp=<(timestamp)',
+          ],
+        },
+      ],
+    },
+    {
+      #TODO(wang16): split it into internal and core.
+      'target_name': 'xwalk_core_java',
+      'type': 'none',
+      'dependencies': [
+        'xwalk_core_internal_java',
+        'xwalk_core_reflection_layer_java_gen',
+      ],
+      'variables': {
+        'java_in_dir': '<(empty_src_dir)',
+        'additional_input_paths': [ '>(reflection_layer_gen_timestamp)' ],
+        'generated_src_dirs': [
+          '<(reflection_java_dir)/bridge',
+          '<(reflection_java_dir)/wrapper',
+        ],
+      },
+      'includes': ['../build/java.gypi']
     },
     {
       'target_name': 'xwalk_runtime_java',

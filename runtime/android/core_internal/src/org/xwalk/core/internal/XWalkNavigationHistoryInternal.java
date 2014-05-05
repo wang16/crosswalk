@@ -12,9 +12,17 @@ import org.chromium.content.browser.NavigationHistory;
  * This class represents a navigation history for a XWalkViewInternal instance.
  * It's not thread-safe and should be only called on UI thread.
  */
+@XWalkAPI(createInternally = true)
 public class XWalkNavigationHistoryInternal implements Cloneable, Serializable {
     private NavigationHistory mHistory;
     private XWalkViewInternal mXWalkView;
+
+    // Never use this constructor.
+    // It is only used in XWalkNavigationHistoryBridge.
+    public XWalkNavigationHistoryInternal() {
+        mXWalkView = null;
+        mHistory = null;
+    }
 
     XWalkNavigationHistoryInternal(XWalkViewInternal view, NavigationHistory history) {
         mXWalkView = view;
@@ -30,6 +38,7 @@ public class XWalkNavigationHistoryInternal implements Cloneable, Serializable {
      * Total size of navigation history for the XWalkViewInternal.
      * @return the size of total navigation items.
      */
+    @XWalkAPI
     public int size() {
         return mHistory.getEntryCount();
     }
@@ -39,6 +48,7 @@ public class XWalkNavigationHistoryInternal implements Cloneable, Serializable {
      * @param index the given index.
      * @return true if there is an item at the specific index.
      */
+    @XWalkAPI
     public boolean hasItemAt(int index) {
         return index >=0 && index <= size() - 1;
     }
@@ -48,6 +58,7 @@ public class XWalkNavigationHistoryInternal implements Cloneable, Serializable {
      * @param index the given index.
      * @return the navigation item for the given index.
      */
+    @XWalkAPI
     public XWalkNavigationItemInternal getItemAt(int index) {
         return new XWalkNavigationItemInternal(mHistory.getEntryAtIndex(index));
     }
@@ -56,6 +67,7 @@ public class XWalkNavigationHistoryInternal implements Cloneable, Serializable {
      * Get the current item which XWalkViewInternal displays.
      * @return the current navigation item.
      */
+    @XWalkAPI
     public XWalkNavigationItemInternal getCurrentItem() {
         return getItemAt(getCurrentIndex());
     }
@@ -64,6 +76,7 @@ public class XWalkNavigationHistoryInternal implements Cloneable, Serializable {
      * Test whether XWalkViewInternal can go back.
      * @return true if it can go back.
      */
+    @XWalkAPI
     public boolean canGoBack() {
         return mXWalkView.canGoBack();
     }
@@ -72,6 +85,7 @@ public class XWalkNavigationHistoryInternal implements Cloneable, Serializable {
      * Test whether XWalkViewInternal can go forward.
      * @return true if it can go forward.
      */
+    @XWalkAPI
     public boolean canGoForward() {
         return mXWalkView.canGoForward();
     }
@@ -80,8 +94,10 @@ public class XWalkNavigationHistoryInternal implements Cloneable, Serializable {
      * The direction for web page navigation.
      */
     /** The backward direction for web page navigation. */
+    @XWalkAPI(isConst = true)
     public final static int BACKWARD = 0;
     /** The forward direction for web page navigation. */
+    @XWalkAPI(isConst = true)
     public final static int FORWARD = 1;
 
     /**
@@ -90,6 +106,7 @@ public class XWalkNavigationHistoryInternal implements Cloneable, Serializable {
      * @param direction the direction of navigation.
      * @param steps go back or foward with a given steps.
      */
+    @XWalkAPI
     public void navigate(int direction, int steps) {
         switch(direction) {
             case FORWARD:
@@ -107,6 +124,7 @@ public class XWalkNavigationHistoryInternal implements Cloneable, Serializable {
      * Get the index for current navigation item.
      * @return current index in the navigation history.
      */
+    @XWalkAPI
     public int getCurrentIndex() {
         return mHistory.getCurrentEntryIndex();
     }
@@ -114,6 +132,7 @@ public class XWalkNavigationHistoryInternal implements Cloneable, Serializable {
     /**
      * Clear all history owned by this XWalkViewInternal.
      */
+    @XWalkAPI
     public void clear() {
         mXWalkView.clearHistory();
     }
