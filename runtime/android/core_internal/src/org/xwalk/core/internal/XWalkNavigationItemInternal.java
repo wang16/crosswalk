@@ -15,7 +15,7 @@ public class XWalkNavigationItemInternal implements Cloneable {
 
     // Never use this constructor.
     // It is only used in XWalkNavigationItemBridge.
-    public XWalkNavigationItemInternal() {
+    XWalkNavigationItemInternal() {
         mEntry = null;
     }
 
@@ -23,7 +23,7 @@ public class XWalkNavigationItemInternal implements Cloneable {
         mEntry = entry;
     }
 
-    public XWalkNavigationItemInternal(XWalkNavigationItemInternal item) {
+    XWalkNavigationItemInternal(XWalkNavigationItemInternal item) {
         mEntry = item.mEntry;
     }
 

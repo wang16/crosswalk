@@ -19,7 +19,7 @@ public class XWalkNavigationHistoryInternal implements Cloneable, Serializable {
 
     // Never use this constructor.
     // It is only used in XWalkNavigationHistoryBridge.
-    public XWalkNavigationHistoryInternal() {
+    XWalkNavigationHistoryInternal() {
         mXWalkView = null;
         mHistory = null;
     }
@@ -29,7 +29,7 @@ public class XWalkNavigationHistoryInternal implements Cloneable, Serializable {
         mHistory = history;
     }
 
-    public XWalkNavigationHistoryInternal(XWalkNavigationHistoryInternal history) {
+    XWalkNavigationHistoryInternal(XWalkNavigationHistoryInternal history) {
         mXWalkView = history.mXWalkView;
         mHistory = history.mHistory;
     }
