@@ -560,7 +560,10 @@ public class Generator {
         if (annotation == null) return type;
 
         if (target == TargetType.REFLECTION_LAYER_BRIDGE) {
-            if (clazz.isInterface()) return type;
+            Class<?> instance = annotation.instance();
+            if (instance != Object.class) {
+                return transferType(instance.getSimpleName(), instance, target);
+            }
             return type.replace(INTERNAL_CLASS_SUFFIX, BRIDGE_CLASS_SUFFIX);
         } else if (target == TargetType.REFLECTION_LAYER_WRAPPER) {
             return type.replace(INTERNAL_CLASS_SUFFIX, "");
