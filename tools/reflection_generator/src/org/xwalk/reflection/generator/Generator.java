@@ -52,18 +52,21 @@ public class Generator {
         REFLECTION_LAYER_WRAPPER
     };
     private static Set<Class<?>> usedClassSet = new HashSet<Class<?>>();
+    private static boolean createReflection;
 
     /**
      * @param args
      */
     @SuppressWarnings("unchecked")
     public static void main(String[] argv) {
-        if (argv.length < 2) {
+        if (argv.length < 3) {
             throw new RuntimeException("Invalid parameters");
         }
-        String wrapperPackage = "org.xwalk.core";;
-        String internalPackagePath = argv[0];
-        String intermediatePath = argv[1];
+        String wrapperPackage = "org.xwalk.core";
+        createReflection = Boolean.parseBoolean(argv[0]);
+        String internalPackagePath = argv[1];
+        String intermediatePath = argv[2];
+
         File output = new File(intermediatePath);
         File input = new File(internalPackagePath);
         if (!output.isDirectory()) {
