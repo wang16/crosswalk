@@ -167,7 +167,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      */
     @XWalkAPI(preWrapperLines = {"super(%1, %2);"},
               postWrapperLines = {
-                  "addView(bridge, new FrameLayout.LayoutParams(",
+                  "addView((FrameLayout)bridge, new FrameLayout.LayoutParams(",
                   "        FrameLayout.LayoutParams.MATCH_PARENT,",
                   "        FrameLayout.LayoutParams.MATCH_PARENT));"})
     public XWalkViewInternal(Context context, AttributeSet attrs) {
@@ -186,7 +186,7 @@ public class XWalkViewInternal extends android.widget.FrameLayout {
      */
     @XWalkAPI(preWrapperLines = {"super(%1, null);"},
               postWrapperLines = {
-                  "addView(bridge, new FrameLayout.LayoutParams(",
+                  "addView((FrameLayout)bridge, new FrameLayout.LayoutParams(",
                   "        FrameLayout.LayoutParams.MATCH_PARENT,",
                   "        FrameLayout.LayoutParams.MATCH_PARENT));"})
     public XWalkViewInternal(Context context, Activity activity) {

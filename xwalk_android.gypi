@@ -101,6 +101,7 @@
             '--source=runtime/android/core_internal/src',
             '--output=<(reflection_java_dir)',
             '--stamp=<(timestamp)',
+            '--helper-class=runtime/android/core_internal/src/org/xwalk/core/internal/ReflectionHelper.java',
           ],
         },
       ],

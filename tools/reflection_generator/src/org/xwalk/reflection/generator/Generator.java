@@ -34,6 +34,7 @@ import org.xwalk.core.internal.XWalkViewInternal;
 public class Generator {
     private final static String INTERNAL_CLASS_SUFFIX = "Internal";
     private final static String BRIDGE_CLASS_SUFFIX = "Bridge";
+    private final static String WRAPPER_PACKAGE = "org.xwalk.core";
     private final static String[] PARAM_NAMES = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"};
     private final static Class<?>[] CLASSES_TO_REFLECTIONIZE = {
         XWalkJavascriptResultHandlerInternal.class,
@@ -45,6 +46,10 @@ public class Generator {
         XWalkResourceClientInternal.class,
         XWalkViewInternal.class
     };
+    private final static Class<?>[] REFLECTION_CLASSES = {
+        Method.class,
+        Constructor.class
+    };
 
     enum TargetType {
         REFLECTION_LAYER_INTERNAL,
@@ -52,6 +57,8 @@ public class Generator {
         REFLECTION_LAYER_WRAPPER
     };
     private static Set<Class<?>> usedClassSet = new HashSet<Class<?>>();
+    private static Set<Method> usedMethodSet = new HashSet<Method>();
+    private static Set<Constructor<?>> usedConstructorSet = new HashSet<Constructor<?>>();
     private static boolean createReflection;
 
     /**
@@ -62,8 +69,9 @@ public class Generator {
         if (argv.length < 3) {
             throw new RuntimeException("Invalid parameters");
         }
-        String wrapperPackage = "org.xwalk.core";
-        createReflection = Boolean.parseBoolean(argv[0]);
+        String wrapperPackage = WRAPPER_PACKAGE;
+        // TODO: remove || true
+        createReflection = Boolean.parseBoolean(argv[0]) || true;
         String internalPackagePath = argv[1];
         String intermediatePath = argv[2];
 
@@ -99,16 +107,18 @@ public class Generator {
             BufferedReader internalReader = null;
             try {
                 usedClassSet.clear();
+                usedMethodSet.clear();
+                usedConstructorSet.clear();
                 InputStreamReader isr = new InputStreamReader(new FileInputStream(internalFile));
                 internalReader = new BufferedReader(isr);
                 List<String> imports = getImportsInInternal(internalReader);
                 wrapperWriter = new BufferedWriter(new FileWriter(wrapperFile));
                 if (clazz.isInterface()) {
-                    parseInterface(clazz, annotation, wrapperPackage, imports, wrapperWriter);
+                    parseInterface(clazz, wrapperPackage, imports, wrapperWriter);
                 } else {
                     File bridgeFile = new File(bridgePackageDir, baseClassName + "Bridge.java");
                     bridgeWriter = new BufferedWriter(new FileWriter(bridgeFile));
-                    parseClass(clazz, annotation, wrapperPackage, imports, wrapperWriter, bridgeWriter);
+                    parseClass(clazz, wrapperPackage, imports, wrapperWriter, bridgeWriter);
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -135,17 +145,17 @@ public class Generator {
         return ret;
     }
 
-    public static void parseClass(Class<?> clazz, XWalkAPI annotation, String wrapperPackage,
+    public static void parseClass(Class<?> clazz, String wrapperPackage,
             List<String> imports, Writer wrapperWriter, Writer bridgeWriter) throws IOException {
         String className = clazz.getSimpleName();
-        if (!className.endsWith(INTERNAL_CLASS_SUFFIX)) {
+        XWalkAPI annotation = clazz.getAnnotation(XWalkAPI.class);
+        if (annotation == null || !className.endsWith(INTERNAL_CLASS_SUFFIX)) {
             throw new RuntimeException("Class to be reflectionized must end with Internal");
         }
-        className = className.substring(0, className.length() - INTERNAL_CLASS_SUFFIX.length());
         StringBuilder bridge = new StringBuilder();
         StringBuilder wrapper = new StringBuilder();
-        generateHeader(className, annotation, false, bridge, TargetType.REFLECTION_LAYER_BRIDGE);
-        generateHeader(className, annotation, false, wrapper, TargetType.REFLECTION_LAYER_WRAPPER);
+        generateHeader(clazz, bridge, TargetType.REFLECTION_LAYER_BRIDGE);
+        generateHeader(clazz, wrapper, TargetType.REFLECTION_LAYER_WRAPPER);
         Constructor<?>[] constructors = clazz.getDeclaredConstructors();
         boolean hasConstructor = false;
         // If the class declares noInstance or createInternally, it doesn't need constructor besides
@@ -153,14 +163,15 @@ public class Generator {
         if (!annotation.noInstance() && !annotation.createInternally()) {
             for (Constructor<?> constructor : constructors) {
                 if (constructor.getAnnotation(XWalkAPI.class) != null) {
-                    appendConstrucor(className, constructor, bridge, TargetType.REFLECTION_LAYER_BRIDGE);
-                    appendConstrucor(className, constructor, wrapper, TargetType.REFLECTION_LAYER_WRAPPER);
+                    usedConstructorSet.add(constructor);
+                    appendConstrucor(clazz, constructor, bridge, TargetType.REFLECTION_LAYER_BRIDGE);
+                    appendConstrucor(clazz, constructor, wrapper, TargetType.REFLECTION_LAYER_WRAPPER);
                     hasConstructor = true;
                 }
             }
             if (!hasConstructor) {
-                appendConstrucor(className, null, bridge, TargetType.REFLECTION_LAYER_BRIDGE);
-                appendConstrucor(className, null, wrapper, TargetType.REFLECTION_LAYER_WRAPPER);
+                appendConstrucor(clazz, null, bridge, TargetType.REFLECTION_LAYER_BRIDGE);
+                appendConstrucor(clazz, null, wrapper, TargetType.REFLECTION_LAYER_WRAPPER);
             }
         }
         Field[] fields = clazz.getDeclaredFields();
@@ -172,36 +183,38 @@ public class Generator {
         Method[] methods = clazz.getDeclaredMethods();
         for (Method method : methods) {
             if (method.getAnnotation(XWalkAPI.class) != null) {
+                usedMethodSet.add(method);
                 appendMethod(method, annotation, false, bridge, TargetType.REFLECTION_LAYER_BRIDGE);
                 appendMethod(method, annotation, false, wrapper, TargetType.REFLECTION_LAYER_WRAPPER);
             }
         }
-        generateFooter(className, bridge, TargetType.REFLECTION_LAYER_BRIDGE);
-        generateFooter(className, wrapper, TargetType.REFLECTION_LAYER_WRAPPER);
+        generateFooter(clazz, bridge, TargetType.REFLECTION_LAYER_BRIDGE);
+        generateFooter(clazz, wrapper, TargetType.REFLECTION_LAYER_WRAPPER);
         InsertPackageImport(clazz.getPackage().getName(), wrapperPackage, imports,
                 bridge, TargetType.REFLECTION_LAYER_BRIDGE);
         InsertPackageImport(wrapperPackage, clazz.getPackage().getName(), imports,
                 wrapper, TargetType.REFLECTION_LAYER_WRAPPER);
+
         wrapperWriter.write(wrapper.toString());
         bridgeWriter.write(bridge.toString());
     }
 
-    public static void parseInterface(Class<?> clazz, XWalkAPI annotation, String wrapperPackage,
+    public static void parseInterface(Class<?> clazz, String wrapperPackage,
             List<String> imports, Writer wrapperWriter) throws IOException {
         String className = clazz.getSimpleName();
-        if (!className.endsWith(INTERNAL_CLASS_SUFFIX)) {
+        XWalkAPI annotation = clazz.getAnnotation(XWalkAPI.class);
+        if (annotation == null || !className.endsWith(INTERNAL_CLASS_SUFFIX)) {
             throw new RuntimeException("Class to be reflectionized must end with Internal");
         }
-        className = className.substring(0, className.length() - INTERNAL_CLASS_SUFFIX.length());
         StringBuilder wrapper = new StringBuilder();
-        generateHeader(className, annotation, true, wrapper, TargetType.REFLECTION_LAYER_WRAPPER);
+        generateHeader(clazz, wrapper, TargetType.REFLECTION_LAYER_WRAPPER);
         Method[] methods = clazz.getDeclaredMethods();
         for (Method method : methods) {
             if (method.getAnnotation(XWalkAPI.class) != null) {
                 appendMethod(method, annotation, true, wrapper, TargetType.REFLECTION_LAYER_WRAPPER);
             }
         }
-        generateFooter(className, wrapper, TargetType.REFLECTION_LAYER_WRAPPER);
+        generateFooter(clazz, wrapper, TargetType.REFLECTION_LAYER_WRAPPER);
         InsertPackageImport(wrapperPackage, clazz.getPackage().getName(), imports,
                 wrapper, TargetType.REFLECTION_LAYER_WRAPPER);
         wrapperWriter.write(wrapper.toString());
@@ -221,24 +234,38 @@ public class Generator {
                 }
             }
         }
-        String suffix = "";
-        if (type == TargetType.REFLECTION_LAYER_WRAPPER) {
-            suffix = BRIDGE_CLASS_SUFFIX;
-        }
-        for (int i = 0 ; i < CLASSES_TO_REFLECTIONIZE.length; i++) {
-            Class<?> clazz = CLASSES_TO_REFLECTIONIZE[i];
-            if (!clazz.isInterface()) {
-                String className =
-                        clazz.getSimpleName().replace(INTERNAL_CLASS_SUFFIX, suffix);
-                builder.insert(0, "import " + reflectionPackage + "." + className + ";\n");
+        if (!createReflection) {
+            String suffix = "";
+            if (type == TargetType.REFLECTION_LAYER_WRAPPER) {
+                suffix = BRIDGE_CLASS_SUFFIX;
             }
+            for (int i = 0 ; i < CLASSES_TO_REFLECTIONIZE.length; i++) {
+                Class<?> clazz = CLASSES_TO_REFLECTIONIZE[i];
+                if (!clazz.isInterface()) {
+                    String className =
+                            clazz.getSimpleName().replace(INTERNAL_CLASS_SUFFIX, suffix);
+                    builder.insert(0, "import " + reflectionPackage + "." + className + ";\n");
+                }
+            }
+        }
+        for (Class<?> clazz : REFLECTION_CLASSES) {
+            builder.insert(0, "import " + clazz.getPackage().getName() + "." + clazz.getSimpleName() + ";\n");
         }
         builder.insert(0, "package " + packageName + ";\n");
     }
 
-    private static void appendConstrucor(String className, Constructor<?> constructor,
-            StringBuilder builder, TargetType type) {
-        String bridge = className + BRIDGE_CLASS_SUFFIX;
+    private static void appendConstrucor(Class<?> clazz, Constructor<?> constructor,
+            StringBuilder builder, TargetType target) {
+        String internal = clazz.getSimpleName();
+        String bridge = internal.replace(INTERNAL_CLASS_SUFFIX, BRIDGE_CLASS_SUFFIX);
+        String wrapper = internal.replace(INTERNAL_CLASS_SUFFIX, "");
+        if (createReflection) {
+            if (target == TargetType.REFLECTION_LAYER_BRIDGE) {
+                wrapper = "Object";
+            } else if (target == TargetType.REFLECTION_LAYER_WRAPPER) {
+                bridge = "Object";
+            }
+        }
         String declare = "";
         String use = "";
         String comma = "";
@@ -257,12 +284,12 @@ public class Generator {
         }
         if (constructor != null) {
             String[] paramsStrings =
-                    getMethodParamsStrings(constructor.getGenericParameterTypes(), type, false, PARAM_NAMES);
+                    getMethodParamsStrings(constructor.getGenericParameterTypes(), target, false, PARAM_NAMES);
             declare = paramsStrings[0];
             use = paramsStrings[1];
             if (!use.isEmpty()) comma = ", ";
         }
-        if (type == TargetType.REFLECTION_LAYER_BRIDGE) {
+        if (target == TargetType.REFLECTION_LAYER_BRIDGE) {
             /*
                 public clazzBridge(int a, clazz wrapper) {
                     super(a);
@@ -273,39 +300,64 @@ public class Generator {
                     "    public %2$s(%3$s%5$s%1$s wrapper) {\n" +
                     "        super(%4$s);\n" +
                     "        this.wrapper = wrapper;\n" +
+                    "        try { reflectionInit(); } catch (Exception e) { ReflectionHelper.handleException(e); }\n" +
                     "    }\n",
-                    className, bridge, declare, use, comma));
-        } else if (type == TargetType.REFLECTION_LAYER_WRAPPER) {
-            /*
+                    wrapper, bridge, declare, use, comma));
+        } else if (target == TargetType.REFLECTION_LAYER_WRAPPER) {
+            /* No reflection
                 XWalkClient(int a) {
                     bridge = new XWalkClientBridge(a, this);
                 }
             */
+            /* With reflection
+            XWalkClient(int a) {
+                bridge = ReflectionHelper.createInstance("XWalkClientBridgeInt", a, this);
+            }
+            */
+            String bridgeCreation = "";
+            if (createReflection) {
+                bridgeCreation = String.format(
+                        "bridge = ReflectionHelper.createInstance(\"%1$s\", %2$s%3$sthis);",
+                        generateConstructorName(constructor), use, comma);
+            } else {
+                bridgeCreation = String.format("bridge = new %1$s(%2$s%3$sthis);", bridge, use, comma);
+            }
             builder.append(String.format(
                     "    public %1$s(%3$s) {\n" +
-                    "%6$s" +
-                    "        bridge = new %2$s(%4$s%5$sthis);\n" +
-                    "%7$s" +
+                    "%4$s" +
+                    "        %2$s;\n" +
+                    "        try { reflectionInit(); } catch (Exception e) { ReflectionHelper.handleException(e); }\n" +
+                    "%5$s" +
                     "    }\n",
-                    className, bridge, declare, use, comma,
+                    wrapper, bridgeCreation, declare,
                     preWrapper, postWrapper));
         }
     }
 
     private static void generateHeader(
-            String className, XWalkAPI annotation, boolean isInterface,
-            StringBuilder builder, TargetType type) {
-        String bridge = className + BRIDGE_CLASS_SUFFIX;
-        String internal = className + INTERNAL_CLASS_SUFFIX;
+            Class<?> clazz, StringBuilder builder, TargetType target) {
+        XWalkAPI annotation = clazz.getAnnotation(XWalkAPI.class);
+        boolean isInterface = clazz.isInterface();
+        String internal = clazz.getSimpleName();
+        String bridge = internal.replace(INTERNAL_CLASS_SUFFIX, BRIDGE_CLASS_SUFFIX);
+        String wrapper = internal.replace(INTERNAL_CLASS_SUFFIX, "");
+        if (createReflection) {
+            if (target == TargetType.REFLECTION_LAYER_BRIDGE) {
+                wrapper = "Object";
+            } else if (target == TargetType.REFLECTION_LAYER_WRAPPER) {
+                bridge = "Object";
+            }
+        }
         boolean isStatic = annotation.noInstance();
-        if (type == TargetType.REFLECTION_LAYER_BRIDGE) {
+        if (target == TargetType.REFLECTION_LAYER_BRIDGE) {
             if (isStatic) {
                 /*
                 public class clazzBridge extends clazzInternal {
                 */
                 builder.append(String.format(
-                        "public class %1$s extends %2$s {\n",
-                        bridge, internal));
+                        "public class %1$s extends %2$s {\n" +
+                        "    private final static String WRAPPER_CLASS = \"%3$s\";\n",
+                        bridge, internal, WRAPPER_PACKAGE + "." + wrapper));
             } else {
                 /*
                 public class clazzBridge extends clazzInternal {
@@ -316,34 +368,56 @@ public class Generator {
                 */
                 builder.append(String.format(
                         "public class %2$s extends %3$s {\n" +
+                        "    private final static String WRAPPER_CLASS = \"%4$s\";\n" +
                         "    private %1$s wrapper;\n" +
                         "    public %1$s getWrapper() {\n" +
                         "        return wrapper;\n" +
                         "    }\n",
-                        className, bridge, internal));
+                        wrapper, bridge, internal, WRAPPER_PACKAGE + "." + wrapper));
                 if (annotation.createInternally()) {
-                    /*
+                    /* No reflection
                     private clazzInternal internal = null;
                     clazzBridge(clazzInternal internal) {
                         this.internal = internal;
                         this.wrapper = new clazz(this);
                     }
                     */
+                    /* With reflection
+                    private clazzInternal internal = null;
+                    clazzBridge(clazzInternal internal) {
+                        this.internal = internal;
+                        this.wrapper = (clazz)ReflectionHelper.createInstance(bridge, this);
+                    }
+                    */
+                    String wrapperCreation = "";
+                    if (createReflection) {
+                        wrapperCreation = String.format(
+                                "this.wrapper = ReflectionHelper.createInstance(\"%1$s\", this);",
+                                generateConstructorName(clazz));
+                    } else {
+                        wrapperCreation = String.format("this.wrapper = new %1$s(this);", wrapper);
+                    }
                     builder.append(String.format(
                             "    private %3$s internal = null;\n" +
                             "    %2$s(%3$s internal) {\n" +
                             "        this.internal = internal;\n" +
-                            "        this.wrapper = new %1$s(this);\n" +
+                            "        %1$s\n" +
+                            "        try { reflectionInit(); } catch (Exception e) { ReflectionHelper.handleException(e); }\n" +
                             "    }\n",
-                            className, bridge, internal));
+                            wrapperCreation, bridge, internal));
                 }
             }
-        } else if (type == TargetType.REFLECTION_LAYER_WRAPPER) {
+        } else if (target == TargetType.REFLECTION_LAYER_WRAPPER) {
             if (isInterface) {
                 /*
                 public interface XWalkInterface {
                 */
-                builder.append(String.format("public interface %1$s {\n", className));
+                builder.append(String.format("public interface %1$s {\n", wrapper));
+            } else if (isStatic) {
+                /*
+                public class XWalkPreference {
+                */
+                builder.append(String.format("public class %1$s {\n", wrapper));
             } else {
                 /*
                 public class XWalkClient {
@@ -368,17 +442,19 @@ public class Generator {
                 }
                 builder.append(String.format(
                         "public class %1$s %3$s{\n" +
+                        "    private final static String BRIDGE_CLASS = \"%4$s\";\n" +
                         "    private %2$s bridge;\n" +
                         "    public %2$s getBridge() {\n" +
                         "        return bridge;\n" +
                         "    }\n",
-                        className, bridge, extAndImpl));
+                        wrapper, bridge, extAndImpl, clazz.getPackage().getName() + "." + clazz.getSimpleName()));
                 if (!annotation.createExternally()) {
                     builder.append(String.format(
                             "    public %1$s(%2$s bridge) {\n" +
                             "        this.bridge = bridge;\n" +
+                            "        try { reflectionInit(); } catch (Exception e) { ReflectionHelper.handleException(e); }\n" +
                             "    }\n",
-                            className, bridge, extAndImpl));
+                            wrapper, bridge, extAndImpl));
                 }
             }
         }
@@ -387,6 +463,7 @@ public class Generator {
     private static void appendMethod(
             Method method, XWalkAPI annotation, boolean isInterface, StringBuilder builder, TargetType target) {
         String name = method.getName();
+        String methodName = generateMethodName(method);
         Type retType = method.getGenericReturnType();
         Class<?> retClazz = method.getReturnType();
         String modifierString = "public";
@@ -443,7 +520,14 @@ public class Generator {
                 String v = String.format("%1$s.%2$s(%3$s)", internalClass, name, paramsStringsWrapper[1]);
                 retValue = transferValueExpress(retType, v, true, true, target);
             } else {
-                String v = String.format("wrapper.%1$s(%2$s)", name, paramsStringsWrapper[1]);
+                String v = "";
+                if (createReflection) {
+                    String params = paramsStringsWrapper[1];
+                    if (!params.isEmpty()) params = ", " + params;
+                    v = String.format("ReflectionHelper.invokeMethod(%1$s, wrapper%2$s)", methodName, params);
+                } else {
+                    v = String.format("wrapper.%1$s(%2$s)", name, paramsStringsWrapper[1]);
+                }
                 retValue = transferValueExpress(retType, v, true, true, target);
             }
             // BridgeCall
@@ -495,23 +579,43 @@ public class Generator {
                         name, retTypeString, paramsStrings[0], modifierString
                 ));
             } else {
+                String staticTerm = "";
+                String bridgeClass = transferType(null, method.getDeclaringClass(), target);
                 if (isStatic) {
-                    String internalClass = method.getDeclaringClass().getSimpleName();
-                    String bridgeClass = internalClass.replace(INTERNAL_CLASS_SUFFIX, BRIDGE_CLASS_SUFFIX);
-                    String v = String.format("%1$s.%2$s(%3$s)", bridgeClass, name, paramsStrings[1]);
-                    retValue = transferValueExpress(retType, v, false, true, target);
+                    if (createReflection) {
+                        String paramTypes = generateParamTypesFromMethod(method, null, target);
+                        staticTerm = String.format(
+                                "        Class<?> clazz = ReflectionHelper.loadClass(\"%1$s\");\n" +
+                                "        Method method = ReflectionHelper.loadMethod(clazz, \"%2$s\"%3$s);\n",
+                                generateFullClassName(method.getDeclaringClass(), target),
+                                name, paramTypes);
+                        String v = String.format(
+                                "ReflectionHelper.invokeMethod(method, null, %1$s)", paramsStrings[1]);
+                        retValue = transferValueExpress(retType, v, false, true, target);
+                    } else {
+                        String v = String.format("%1$s.%2$s(%3$s)", bridgeClass, name, paramsStrings[1]);
+                        retValue = transferValueExpress(retType, v, false, true, target);
+                    }
                 } else {
-                    String v = String.format("bridge.%1$sSuper(%2$s)", name, paramsStrings[1]);
+                    String v = "";
+                    if (createReflection) {
+                        String params = paramsStrings[1];
+                        if (!params.isEmpty()) params = ", " + params;
+                        v = String.format("ReflectionHelper.invokeMethod(%1$s, bridge%2$s)", methodName, params);
+                    } else {
+                        v = String.format("bridge.%1$sSuper(%2$s)", name, paramsStrings[1]);
+                    }
                     retValue = transferValueExpress(retType, v, false, true, target);
                 }
                 builder.append(String.format(
                         "    %5$s %2$s %1$s(%4$s) {\n" +
                         "%7$s" +
+                        "%9$s" +
                         "        %3$s%6$s;\n" +
                         "%8$s" +
                         "    }\n",
                         name, retTypeString, returnTerm, paramsStrings[0], modifierString, retValue,
-                        preWrapper, postWrapper
+                        preWrapper, postWrapper, staticTerm
                 ));
             }
         }
@@ -559,6 +663,7 @@ public class Generator {
      * Transfer an internal type string into bridge/wrapper type.
      */
     private static String transferType(String type, Class<?> clazz, TargetType target) {
+        if (type == null) type = clazz.getSimpleName();
         XWalkAPI annotation = clazz.getAnnotation(XWalkAPI.class);
         if (annotation == null) return type;
 
@@ -587,7 +692,16 @@ public class Generator {
 
         Class<?> clazz = extractClassFromType(valueType);
         XWalkAPI annotation = clazz.getAnnotation(XWalkAPI.class);
-        if (annotation == null) return value;
+        if (annotation == null) {
+            if (value.startsWith("ReflectionHelper.invokeMethod")) {
+                String forceType = type;
+                if (clazz.isPrimitive()) {
+                    forceType = primitiveToObject(clazz).getSimpleName();
+                }
+                value = "(" + forceType + ")" + value;
+            }
+            return value;
+        }
 
         /* Handle Internal class */
 
@@ -614,7 +728,12 @@ public class Generator {
             if (forReturnValue) {
                 // The return of bridge's function is always bridge.
                 // So here transfers bridge value to wrapper, add ".getWrapper()"
-                value = String.format("(%s).getWrapper()", value);
+                if (createReflection) {
+                    value = String.format("(%1$s)ReflectionHelper.getBridgeOrWrapper(%2$s)",
+                                          instanceWrapperType, value);
+                } else {
+                    value = String.format("(%s).getWrapper()", value);
+                }
             } else {
                 // The input of wrapper's function is always wrapper.
                 // So here transfers wrapper value to bridge value, add ".getBridge()"
@@ -626,7 +745,12 @@ public class Generator {
             if (forReturnValue) {
                 // The return of wrapper's function is always wrapper.
                 // So here transfers wrapper to bridge.
-                value = String.format("(%s).getBridge()", value);
+                if (createReflection) {
+                    value = String.format("(%1$s)ReflectionHelper.getBridgeOrWrapper(%2$s)",
+                                          instanceBridgeType, value);
+                } else {
+                    value = String.format("(%s).getBridge()", value);
+                }
             } else {
                 // The input of bridge's function is always internal.
                 // So here transfers internal to wrapper.
@@ -705,7 +829,158 @@ public class Generator {
         return (Class<?>)((ParameterizedType)t).getRawType();
     }
 
-    private static void generateFooter(String className, StringBuilder builder, TargetType type) {
+    private static void generateFooter(Class<?> clazz, StringBuilder builder, TargetType target) {
+        StringBuilder initMethod = new StringBuilder();
+        XWalkAPI annotation = clazz.getAnnotation(XWalkAPI.class);
+        if (!clazz.isInterface() && !annotation.noInstance()) {
+            initMethod.append(
+                    "    private void reflectionInit() throws" +
+                    " NoSuchMethodException, ClassNotFoundException {\n");
+            initMethod.append(String.format("        Class<?> clazz = %s.getClass();\n",
+                    target == TargetType.REFLECTION_LAYER_BRIDGE ? "wrapper" : "bridge"));
+            for (Method method : usedMethodSet) {
+                String name = generateMethodName(method);
+                initMethod.insert(0, "    private Method " + name + ";\n");
+                String paramTypes = generateParamTypesFromMethod(method, null, target);
+                String methodName = method.getName();
+                if (target == TargetType.REFLECTION_LAYER_WRAPPER) {
+                    methodName += "Super";
+                }
+                initMethod.append(String.format(
+                        "        %1$s = clazz.getMethod(\"%2$s\"%3$s);\n"
+                        , name, methodName, paramTypes));
+            }
+            initMethod.append("    }\n");
+        }
+        builder.append(initMethod.toString());
+        StringBuilder staticArea = new StringBuilder();
+        staticArea.append("    static {\n");
+        boolean hasStaticContent = false;
+        if (target == TargetType.REFLECTION_LAYER_WRAPPER) {
+            for (Constructor<?> constructor : usedConstructorSet) {
+                String name = generateConstructorName(constructor);
+                String paramTypes = generateParamTypesFromMethod(null, constructor, target);
+                paramTypes += ", Object.class";
+                String fullClassName = generateFullClassName(clazz, target);
+                staticArea.append(String.format(
+                        "        ReflectionHelper.registerConstructor(\"%1$s\", \"%2$s\"%3$s);\n",
+                        name, fullClassName, paramTypes));
+                hasStaticContent = true;
+            }
+        } else if (target == TargetType.REFLECTION_LAYER_BRIDGE && annotation.createInternally()) {
+            staticArea.append(String.format(
+                    "        ReflectionHelper.registerConstructor(\"%1$s\", \"%2$s\", Object.class);\n",
+                    generateConstructorName(clazz),
+                    generateFullClassName(clazz, target)));
+            hasStaticContent = true;
+        }
+        staticArea.append("    }\n");
+        if (hasStaticContent) builder.append(staticArea.toString());
         builder.append("}\n");
+    }
+
+    private static String generateParamTypesFromMethod(
+            Method method, Constructor constructor, TargetType target) {
+        Class<?>[] types;
+        boolean forConstructor = false;
+        if (method != null) {
+            types = method.getParameterTypes();
+        } else if (constructor != null) {
+            types = constructor.getParameterTypes();
+            forConstructor = true;
+        } else {
+            return "";
+        }
+        String paramTypes = "";
+        for (Class<?> param : types) {
+            XWalkAPI paramAnnotation = param.getAnnotation(XWalkAPI.class);
+            if (paramAnnotation == null) {
+                paramTypes += ", " + param.getSimpleName() + ".class";
+            } else {
+                String fullParamClassName = generateFullClassName(param, target);
+                // For constructor, the clazz object doesn't exist yet. Register to ReflectionHelper
+                // with full class name. ReflectionHelper will get the class object when do real
+                // initialization.
+                if (forConstructor) {
+                    paramTypes += ", \"" + fullParamClassName + "\"";
+                } else {
+                    paramTypes +=
+                            ", clazz.getClassLoader().loadClass(\"" +
+                            fullParamClassName +
+                            "\")";
+                }
+            }
+        }
+        return paramTypes;
+    }
+
+    private static String generateFullClassName(Class<?> clazz, TargetType target) {
+        if (!clazz.isAnnotationPresent(XWalkAPI.class)) {
+            return clazz.getPackage().getName() + "." + clazz.getSimpleName();
+        }
+        if (target == TargetType.REFLECTION_LAYER_BRIDGE) {
+            return WRAPPER_PACKAGE + "." + clazz.getSimpleName().replace(INTERNAL_CLASS_SUFFIX, "");
+        } else {
+            return clazz.getName().replace(INTERNAL_CLASS_SUFFIX, BRIDGE_CLASS_SUFFIX);
+        }
+    }
+
+    private static String generateMethodName(Method method) {
+        String name = method.getName();
+        for (Class<?> param : method.getParameterTypes()) {
+            String paramName = param.getSimpleName();
+            name += paramName.substring(0, 1).toUpperCase();
+            if (paramName.length() > 1) name += paramName.substring(1).toLowerCase();
+        }
+        name += "Method";
+        return name;
+    }
+
+    private static String generateConstructorName(Constructor<?> constructor) {
+        String name = constructor.getDeclaringClass().getSimpleName().toLowerCase();
+        for (Class<?> param : constructor.getParameterTypes()) {
+            String paramName = param.getSimpleName();
+            name += paramName.substring(0, 1).toUpperCase();
+            if (paramName.length() > 1) name += paramName.substring(1);
+        }
+        name += "Constructor";
+        return name;
+    }
+
+    private static String generateConstructorName(Class<?> clazz) {
+        // This is only used by bridge, bridge will create wrapper instance if it's created internally.
+        // In such case, bridge will need to have the constructor of wrapper.
+        String name = transferType(
+                null, clazz, TargetType.REFLECTION_LAYER_BRIDGE).toLowerCase();
+        name += "Constructor";
+        return name;
+    }
+
+    private static Class<?> primitiveToObject(Class<?> primitive) {
+        if (primitive == boolean.class) {
+            return Boolean.class;
+        }
+        if (primitive == byte.class) {
+            return Byte.class;
+        }
+        if (primitive == char.class) {
+            return Character.class;
+        }
+        if (primitive == short.class) {
+            return Short.class;
+        }
+        if (primitive == int.class) {
+            return Integer.class;
+        }
+        if (primitive == long.class) {
+            return Long.class;
+        }
+        if (primitive == float.class) {
+            return Float.class;
+        }
+        if (primitive == double.class) {
+            return Double.class;
+        }
+        return Void.class;
     }
 }

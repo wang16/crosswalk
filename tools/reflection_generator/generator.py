@@ -41,6 +41,24 @@ def DoGenerate(options):
   GetCommandOutput(cmd)
 
 
+def DoCopyHelperJava(options):
+  if options.helper_class is None:
+    return
+  f = open(options.helper_class, 'r')
+  output = os.path.join(options.output, 'wrapper', 'src', 'org', 'xwalk', 'core',
+                        os.path.basename(options.helper_class))
+  if not os.path.isdir(os.path.dirname(output)):
+    os.makedirs(os.path.dirname(output))
+  fo = open(output, 'w')
+  for line in f.read().split('\n'):
+    if line.startswith('package '):
+      fo.write('package org.xwalk.core;\n')
+    else:
+      fo.write(line + '\n')
+  fo.close()
+  f.close()
+
+
 def main():
   parser = optparse.OptionParser()
   info = ('list of jars needed when running generator')
@@ -54,9 +72,13 @@ def main():
   info = ('set to true to create real reflection, otherwise '
           'only bridge and wrapper will be created')
   parser.add_option('--reflection', default=False, action='store_true', help=info)
+  info = ('the path of the ReflectionHelper java source, '
+          'will copy it to output folder')
+  parser.add_option('--helper-class', help=info)
   options, _ = parser.parse_args()
 
   DoGenerate(options)
+  DoCopyHelperJava(options)
   if options.stamp:
     Touch(options.stamp)
 
