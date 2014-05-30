@@ -82,16 +82,14 @@ public class XWalkUIClientInternal {
     /**
      * The type of JavaScript modal dialog.
      */
-    public enum JavascriptMessageType {
-        /** JavaScript alert dialog. */
-        JAVASCRIPT_ALERT,
-        /** JavaScript confirm dialog. */
-        JAVASCRIPT_CONFIRM,
-        /** JavaScript prompt dialog. */
-        JAVASCRIPT_PROMPT,
-        /** JavaScript dialog for a window-before-unload notification. */
-        JAVASCRIPT_BEFOREUNLOAD
-    }
+    /** JavaScript alert dialog. */
+    public final static int JAVASCRIPT_ALERT = 0;
+    /** JavaScript confirm dialog. */
+    public final static int JAVASCRIPT_CONFIRM = 1;
+    /** JavaScript prompt dialog. */
+    public final static int JAVASCRIPT_PROMPT = 2;
+    /** JavaScript dialog for a window-before-unload notification. */
+    public final static int JAVASCRIPT_BEFOREUNLOAD = 3;
 
     /**
      * Tell the client to display a prompt dialog to the user.
@@ -102,7 +100,7 @@ public class XWalkUIClientInternal {
      * @param defaultValue the default value string. Only valid for Prompt dialog.
      * @param result the callback to handle the result from caller.
      */
-    public boolean onJavascriptModalDialog(XWalkViewInternal view, JavascriptMessageType type, String url,
+    public boolean onJavascriptModalDialog(XWalkViewInternal view, int type, String url,
             String message, String defaultValue, XWalkJavascriptResultInternal result) {
         switch(type) {
             case JAVASCRIPT_ALERT:

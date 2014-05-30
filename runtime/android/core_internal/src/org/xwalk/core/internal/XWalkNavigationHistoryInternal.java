@@ -79,12 +79,10 @@ public class XWalkNavigationHistoryInternal implements Cloneable, Serializable {
     /**
      * The direction for web page navigation.
      */
-    public enum Direction {
-        /** The backward direction for web page navigation. */
-        BACKWARD,
-        /** The forward direction for web page navigation. */
-        FORWARD
-    }
+    /** The backward direction for web page navigation. */
+    public final static int BACKWARD = 0;
+    /** The forward direction for web page navigation. */
+    public final static int FORWARD = 1;
 
     /**
      * Navigates to the specified step from the current navigation item.
@@ -92,7 +90,7 @@ public class XWalkNavigationHistoryInternal implements Cloneable, Serializable {
      * @param direction the direction of navigation.
      * @param steps go back or foward with a given steps.
      */
-    public void navigate(Direction direction, int steps) {
+    public void navigate(int direction, int steps) {
         switch(direction) {
             case FORWARD:
                 mXWalkView.navigateTo(steps);

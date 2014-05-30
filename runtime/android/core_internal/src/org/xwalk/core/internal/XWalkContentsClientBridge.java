@@ -512,7 +512,7 @@ class XWalkContentsClientBridge extends XWalkContentsClient
         if (isOwnerActivityRunning()) {
             XWalkJavascriptResultHandlerInternal result = new XWalkJavascriptResultHandlerInternal(this, id);
             mXWalkUIClient.onJavascriptModalDialog(mXWalkView,
-                    XWalkUIClientInternal.JavascriptMessageType.JAVASCRIPT_ALERT, url, message, "", result);
+                    XWalkUIClientInternal.JAVASCRIPT_ALERT, url, message, "", result);
         }
     }
 
@@ -521,7 +521,7 @@ class XWalkContentsClientBridge extends XWalkContentsClient
         if (isOwnerActivityRunning()) {
             XWalkJavascriptResultHandlerInternal result = new XWalkJavascriptResultHandlerInternal(this, id);
             mXWalkUIClient.onJavascriptModalDialog(mXWalkView,
-                    XWalkUIClientInternal.JavascriptMessageType.JAVASCRIPT_CONFIRM, url, message, "", result);
+                    XWalkUIClientInternal.JAVASCRIPT_CONFIRM, url, message, "", result);
         }
     }
 
@@ -530,7 +530,7 @@ class XWalkContentsClientBridge extends XWalkContentsClient
         if (isOwnerActivityRunning()) {
             XWalkJavascriptResultHandlerInternal result = new XWalkJavascriptResultHandlerInternal(this, id);
             mXWalkUIClient.onJavascriptModalDialog(mXWalkView,
-                    XWalkUIClientInternal.JavascriptMessageType.JAVASCRIPT_PROMPT, url, message, defaultValue,
+                    XWalkUIClientInternal.JAVASCRIPT_PROMPT, url, message, defaultValue,
                             result);
         }
     }
@@ -540,7 +540,7 @@ class XWalkContentsClientBridge extends XWalkContentsClient
         if (isOwnerActivityRunning()) {
             XWalkJavascriptResultHandlerInternal result = new XWalkJavascriptResultHandlerInternal(this, id);
             mXWalkUIClient.onJavascriptModalDialog(mXWalkView,
-                    XWalkUIClientInternal.JavascriptMessageType.JAVASCRIPT_BEFOREUNLOAD, url, message, "",
+                    XWalkUIClientInternal.JAVASCRIPT_BEFOREUNLOAD, url, message, "",
                             result);
         }
     }

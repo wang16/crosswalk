@@ -18,7 +18,7 @@ public class XWalkUIClient extends XWalkUIClientInternal {
     }
 
     @Override
-    public boolean onJavascriptModalDialog(XWalkViewInternal view, JavascriptMessageType type,
+    public boolean onJavascriptModalDialog(XWalkViewInternal view, int type,
             String url, String message, String defaultValue, XWalkJavascriptResultInternal result) {
         if (view instanceof XWalkView) {
             return onJavascriptModalDialog(
@@ -30,7 +30,7 @@ public class XWalkUIClient extends XWalkUIClientInternal {
         }
     }
 
-    public boolean onJavascriptModalDialog(XWalkView view, JavascriptMessageType type,
+    public boolean onJavascriptModalDialog(XWalkView view, int type,
             String url, String message, String defaultValue, XWalkJavascriptResult result) {
         XWalkJavascriptResultInternal resultInternal =
                 ((XWalkJavascriptResultHandler) result).getInternal();

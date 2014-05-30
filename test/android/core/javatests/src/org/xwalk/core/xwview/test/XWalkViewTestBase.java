@@ -419,7 +419,7 @@ public class XWalkViewTestBase
                     @Override
                     public void run() {
                         mXWalkView.getNavigationHistory().navigate(
-                            XWalkNavigationHistory.Direction.BACKWARD, 1);
+                            XWalkNavigationHistory.BACKWARD, 1);
                     }
                 });
             }
@@ -434,7 +434,7 @@ public class XWalkViewTestBase
                     @Override
                     public void run() {
                         mXWalkView.getNavigationHistory().navigate(
-                            XWalkNavigationHistory.Direction.FORWARD, 1);
+                            XWalkNavigationHistory.FORWARD, 1);
                     }
                 });
             }
