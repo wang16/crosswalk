@@ -11,6 +11,7 @@ import android.content.DialogInterface;
 import android.net.Uri;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
+import android.os.Message;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -280,6 +281,46 @@ public class XWalkUIClientInternal {
      * @since 2.1
      */
     public void onPageLoadStopped(XWalkViewInternal view, String url, LoadStatusInternal status) {
+    }
+
+    /**
+     * The type of initiators request to create new window.
+     * @since 2.1
+     */
+    public enum InitiatedByInternal {
+        BY_USER_GESTURE,
+        BY_JAVASCRIPT
+    }
+
+    /**
+     * Request the host application to create a new window. If the host
+     * application chooses to honor this request, it should return true from
+     * this method, create a new XWalkViewInternal to host the window, insert it into the
+     * View system and send the supplied resultMsg message to its target with
+     * the new XWalkViewInternal as an argument. If the host application chooses not to
+     * honor the request, it should return false from this method. The default
+     * implementation of this method does nothing and hence returns false.
+     * @param view The XWalkViewInternal from which the request for a new window
+     *             originated.
+     * @param initiator BY_USER_GESTURE if the request was initiated by a user gesture,
+     *                  such as the user clicking a link. BY_JAVASCRIPT if the request
+     *                  was initiated by javascript.
+     * @param resultMsg The message to send when once a new XWalkViewInternal has been
+     *                  created. resultMsg.obj is a
+     *                  {@link XWalkViewInternal.XWalkViewTransport} object. This should be
+     *                  used to transport the new XWalkViewInternal, by calling
+     *                  {@link XWalkViewInternal.XWalkViewTransport#setXWalkView(XWalkViewInternal)
+     *                  XWalkViewInternal.XWalkViewTransport.setXWalkView(XWalkViewInternal)}.
+     * @return This method should return true if the host application will
+     *         create a new window, in which case resultMsg should be sent to
+     *         its target. Otherwise, this method should return false. Returning
+     *         false from this method but also sending resultMsg will result in
+     *         undefined behavior.
+     * @since 2.1
+     */
+    public boolean onCreateWindowRequested(
+            XWalkViewInternal view, InitiatedByInternal initiator, Message resultMsg) {
+        return false;
     }
 
     private boolean onJsAlert(XWalkViewInternal view, String url, String message,

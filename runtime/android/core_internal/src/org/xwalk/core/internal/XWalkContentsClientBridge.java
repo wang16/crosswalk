@@ -322,6 +322,7 @@ class XWalkContentsClientBridge extends XWalkContentsClient
 
     @Override
     public boolean onCreateWindow(boolean isDialog, boolean isUserGesture) {
+        // TODO(wang16): Implement and invoke XWalkUIClient.onCreateWindowRequested.
         return false;
     }
 
